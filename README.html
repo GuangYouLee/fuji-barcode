@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuji Barcode — App Guide</title>
+  <style>
+    /* ── Design Tokens ── */
+    :root {
+      --bg:           #f5f7fa;
+      --surface:      #ffffff;
+      --surface-2:    #f0f4f8;
+      --border:       #dde3ed;
+      --border-2:     #c8d0df;
+      --text:         #1a2233;
+      --muted:        #5a677d;
+      --accent:       #e8611a;
+      --accent-light: #fff3ea;
+      --accent-dark:  #c44f10;
+      --blue:         #1a6fbf;
+      --blue-light:   #eaf2fc;
+      --green:        #1a8a5a;
+      --green-light:  #e6f5ee;
+      --shadow-sm:    0 1px 4px rgba(0,0,0,0.08);
+      --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
+      --shadow-lg:    0 8px 32px rgba(0,0,0,0.10);
+      --radius:       16px;
+      --radius-sm:    10px;
+      --sans: "Segoe UI", "Aptos", "Inter", sans-serif;
+      --mono: "Cascadia Code", "Consolas", "Courier New", monospace;
+      --nav-h: 56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      letter-spacing: 0.01em;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; color: var(--accent); }
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+    }
+    ul, ol { padding-left: 1.3em; }
+    li + li { margin-top: 6px; }
+
+    /* ── Sticky Nav ── */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 24px;
+      background: rgba(255,255,255,0.93);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+    .topnav .brand {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--accent);
+      white-space: nowrap;
+      margin-right: 12px;
+      letter-spacing: -0.02em;
+    }
+    .topnav a {
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .topnav a:hover {
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      text-decoration: none;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      width: min(calc(100% - 32px), 1100px);
+      margin: 0 auto;
+      padding: 36px 0 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow-lg);
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 32px;
+      align-items: start;
+    }
+    .hero-text .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: var(--accent-light);
+      border: 1px solid rgba(232,97,26,0.25);
+      color: var(--accent-dark);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    h1 span { color: var(--accent); }
+    .hero-text > p {
+      max-width: 60ch;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border: 1px solid;
+    }
+    .pill.orange { background: var(--accent-light); color: var(--accent-dark); border-color: rgba(232,97,26,0.3); }
+    .pill.blue   { background: var(--blue-light);   color: var(--blue);        border-color: rgba(26,111,191,0.3); }
+    .pill.green  { background: var(--green-light);  color: var(--green);       border-color: rgba(26,138,90,0.3); }
+    .hero-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 200px;
+    }
+    .meta-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .meta-card .meta-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .meta-card .meta-value {
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .icon-orange { background: var(--accent-light); }
+    .icon-blue   { background: var(--blue-light);   }
+    .icon-green  { background: var(--green-light);  }
+    .icon-purple { background: #f0eafc;              }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 28px;
+    }
+    .card > p { color: var(--muted); margin-bottom: 14px; }
+
+    /* ── Two-col grid ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .sub-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+    }
+    .sub-card > p { color: var(--muted); font-size: 0.95rem; margin-top: 8px; }
+
+    /* ── Pipeline Diagram ── */
+    .pipeline {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 28px;
+    }
+    .pipeline-steps {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 20px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      gap: 0;
+    }
+    .step-wrap {
+      display: flex;
+      align-items: flex-start;
+      flex: 1;
+      min-width: 130px;
+    }
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-arrow {
+      flex-shrink: 0;
+      font-size: 1.4rem;
+      color: var(--border-2);
+      padding: 0 4px;
+      margin-top: 16px;
+      line-height: 56px;
+    }
+    .step-bubble {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .step-wrap:nth-child(1) .step-bubble { border-color: #fdba74; background: #fff7ed; }
+    .step-wrap:nth-child(2) .step-bubble { border-color: #93c5fd; background: #eff6ff; }
+    .step-wrap:nth-child(3) .step-bubble { border-color: #86efac; background: #f0fdf4; }
+    .step-wrap:nth-child(4) .step-bubble { border-color: #c4b5fd; background: #faf5ff; }
+    .step-wrap:nth-child(5) .step-bubble { border-color: #fca5a5; background: #fef2f2; }
+    .step-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 0.84rem;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.45;
+      padding: 0 6px;
+    }
+
+    /* ── Scan Modes ── */
+    .mode-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .mode-box {
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      border: 1px solid;
+    }
+    .mode-box.orange {
+      background: var(--accent-light);
+      border-color: rgba(232,97,26,0.22);
+    }
+    .mode-box.blue {
+      background: var(--blue-light);
+      border-color: rgba(26,111,191,0.22);
+    }
+    .mode-box h3 { margin-bottom: 10px; }
+    .mode-box.orange h3 { color: var(--accent-dark); }
+    .mode-box.blue h3   { color: var(--blue); }
+    .mode-box ul { color: var(--text); font-size: 0.94rem; }
+
+    /* ── Code block ── */
+    .codeblock {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .codeblock-bar {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .dot.red    { background: #fc5c65; }
+    .dot.yellow { background: #f7b731; }
+    .dot.green2 { background: #26de81; }
+    .codeblock-bar .filename {
+      margin-left: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    pre {
+      margin: 0;
+      padding: 16px 20px;
+      background: #f8fafc;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      color: var(--text);
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    /* ── Operator flow table ── */
+    .flow-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+    .flow-table th {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .flow-table td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      vertical-align: top;
+      color: var(--text);
+    }
+    .flow-table tr:nth-child(even) td { background: var(--surface-2); }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: var(--accent-light);
+      color: var(--accent-dark);
+    }
+
+    /* ── Badges ── */
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      background: var(--blue-light);
+      border: 1px solid rgba(26,111,191,0.2);
+      color: var(--blue);
+    }
+
+    /* ── Notes ── */
+    .note-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .note-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: #fffbf0;
+      border: 1px solid #f0d598;
+      font-size: 0.94rem;
+      color: var(--text);
+    }
+    .note-item .note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .note-item strong { color: #8a5e00; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-meta { flex-direction: row; flex-wrap: wrap; min-width: unset; }
+      .meta-card { flex: 1; min-width: 140px; }
+      .two-col, .mode-split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .shell { padding: 20px 0 48px; }
+      .hero, .card, .pipeline { padding: 20px; }
+      .pipeline-steps { flex-direction: column; gap: 12px; }
+      .step-arrow { display: none; }
+      .step-wrap { min-width: unset; }
+      .step { flex-direction: row; gap: 14px; align-items: flex-start; }
+      .step-bubble { margin-bottom: 0; }
+      .step-desc { text-align: left; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav" aria-label="Page sections">
+    <span class="brand">&#x2B21; Fuji Barcode</span>
+    <a href="#pipeline">How It Works</a>
+    <a href="#modes">Scan Modes</a>
+    <a href="#matching">Matching</a>
+    <a href="#screens">Screens</a>
+    <a href="#database">Database</a>
+    <a href="#engine">RPA Engine</a>
+    <a href="#operator">Operator Flow</a>
+    <a href="#build">Build &amp; Run</a>
+    <a href="#notes">Notes</a>
+
+  </nav>
+
+  <main class="shell">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-text">
+        <div class="eyebrow">&#x2B21; Avalonia Desktop App</div>
+        <h1>Fuji<span> Barcode</span></h1>
+        <p>
+          Barcode-driven RPA execution. The operator scans a barcode; the app looks up the recipe,
+          resolves the best engine script, and triggers the run — no backend interaction required from the operator.
+        </p>
+        <div class="hero-badges">
+          <span class="pill orange">C# / Avalonia UI</span>
+          <span class="pill blue">PostgreSQL (Npgsql)</span>
+          <span class="pill green">rpa-engine HTTP API</span>
+          <span class="pill orange">MVVM + DI</span>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-card">
+          <div class="meta-label">Input</div>
+          <div class="meta-value">Keyboard-wedge Scanner</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">Scan Modes</div>
+          <div class="meta-value">Object ID &middot; Recipe</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">Output</div>
+          <div class="meta-value">RPA Script Execution</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">UI Screens</div>
+          <div class="meta-value">Operator &middot; Admin</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pipeline -->
+    <section class="pipeline" id="pipeline">
+      <div class="section-header">
+        <div class="section-icon icon-orange">&#x1F504;</div>
+        <h2>End-to-End Execution Pipeline</h2>
+      </div>
+      <p style="color:var(--muted);font-size:0.94rem;">
+        Every barcode scan travels through the same 5-stage pipeline from raw input to triggered execution.
+      </p>
+      <div class="pipeline-steps">
+
+        <div class="step-wrap">
+          <div class="step">
+            <div class="step-bubble">&#x1F4E1;</div>
+            <div class="step-label">Step 1</div>
+            <div class="step-desc">Receive barcode from keyboard-wedge scanner via text input</div>
+          </div>
+          <div class="step-arrow">&#x2192;</div>
+        </div>
+
+        <div class="step-wrap">
+          <div class="step">
+            <div class="step-bubble">&#x1F5C4;&#xFE0F;</div>
+            <div class="step-label">Step 2</div>
+            <div class="step-desc">Resolve to a <strong>recipe name</strong> — direct or via PostgreSQL lookup</div>
+          </div>
+          <div class="step-arrow">&#x2192;</div>
+        </div>
+
+        <div class="step-wrap">
+          <div class="step">
+            <div class="step-bubble">&#x1F50D;</div>
+            <div class="step-label">Step 3</div>
+            <div class="step-desc">Fetch available scripts from rpa-engine via <code>GET /api/scripts</code></div>
+          </div>
+          <div class="step-arrow">&#x2192;</div>
+        </div>
+
+        <div class="step-wrap">
+          <div class="step">
+            <div class="step-bubble">&#x1F3AF;</div>
+            <div class="step-label">Step 4</div>
+            <div class="step-desc">Match recipe to best script (exact, then versioned, then error)</div>
+          </div>
+          <div class="step-arrow">&#x2192;</div>
+        </div>
+
+        <div class="step-wrap">
+          <div class="step">
+            <div class="step-bubble">&#x1F680;</div>
+            <div class="step-label">Step 5</div>
+            <div class="step-desc">Trigger via <code>POST /run/{scriptName}</code> and show result</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Scan Modes -->
+    <div class="card" id="modes">
+      <div class="section-header">
+        <div class="section-icon icon-blue">&#x1F526;</div>
+        <h2>Scan Modes</h2>
+      </div>
+      <p>The operator selects a mode before scanning. Both paths converge at Step 3 (script fetch).</p>
+      <div class="mode-split">
+        <div class="mode-box orange">
+          <h3>&#x1F7E0; Object ID Mode</h3>
+          <ul>
+            <li>Scanned value = an <strong>object identifier</strong></li>
+            <li>App queries PostgreSQL table <code>barcode_recipe_mappings</code></li>
+            <li>DB returns <code>recipe_name</code> &rarr; continues to script fetch</li>
+          </ul>
+        </div>
+        <div class="mode-box blue">
+          <h3>&#x1F535; Recipe Mode</h3>
+          <ul>
+            <li>Scanned value = the <strong>recipe name directly</strong></li>
+            <li>No database lookup needed</li>
+            <li>Proceeds straight to script fetch</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matching -->
+    <div class="card" id="matching">
+      <div class="section-header">
+        <div class="section-icon icon-purple">&#x1F3AF;</div>
+        <h2>Script Matching Logic</h2>
+      </div>
+      <p>Implemented in <a href="./Helpers/RecipeScriptResolver.cs"><code>Helpers/RecipeScriptResolver.cs</code></a>. Rules applied in priority order:</p>
+      <div class="two-col" style="margin-top:14px;">
+        <div class="sub-card">
+          <h3>Priority Rules</h3>
+          <ol style="color:var(--text);font-size:0.95rem;">
+            <li><strong>Exact match</strong> on script name &rarr; wins immediately.</li>
+            <li>Names starting with <code>recipeName_</code> are candidates.</li>
+            <li>Highest <code>_Vx.y</code> version among candidates wins.</li>
+            <li>Ambiguous non-versioned tie &rarr; <strong>error, no guess</strong>.</li>
+          </ol>
+        </div>
+        <div class="sub-card">
+          <h3>Example</h3>
+          <p>Recipe name scanned:</p>
+          <code>group_script1</code>
+          <p style="margin-top:10px;">Matched script selected:</p>
+          <code>group_script1_202605261129_V1.0</code>
+          <div class="badge-row" style="margin-top:12px;">
+            <span class="badge">Versioned match wins</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screens -->
+    <div class="card" id="screens">
+      <div class="section-header">
+        <div class="section-icon icon-blue">&#x1F5A5;&#xFE0F;</div>
+        <h2>UI Screens</h2>
+      </div>
+      <div class="two-col">
+        <div class="sub-card">
+          <h3>Main Screen (Operator)</h3>
+          <p>The primary operator-facing window. Built for speed — scan in, result out.</p>
+          <ul style="font-size:0.94rem;">
+            <li>Single scan input box, auto-focused on load</li>
+            <li>Mode toggle: <code>Object ID</code> / <code>Recipe</code></li>
+            <li>Submit via <kbd style="font-family:var(--mono);background:var(--border);padding:1px 5px;border-radius:4px;font-size:0.82rem;">Enter</kbd> or button</li>
+            <li>Input clears automatically after each scan</li>
+            <li>Guarded by <code>IsBusy</code> — no duplicate triggers</li>
+            <li>Status text shows result inline</li>
+          </ul>
+          <p style="margin-top:12px;font-size:0.88rem;">
+            Logic: <a href="./ViewModels/MainWindowViewModel.cs"><code>ViewModels/MainWindowViewModel.cs</code></a>
+          </p>
+        </div>
+        <div class="sub-card">
+          <h3>Admin Screen (Mappings CRUD)</h3>
+          <p>Maintains the <code>barcode_recipe_mappings</code> table from within the app.</p>
+          <ul style="font-size:0.94rem;">
+            <li><strong>Create:</strong> enter Object ID + Recipe &rarr; Save</li>
+            <li><strong>Read:</strong> click Refresh to load mappings list</li>
+            <li><strong>Update:</strong> select row &rarr; edit &rarr; Save</li>
+            <li><strong>Delete:</strong> select row or enter ID &rarr; Delete</li>
+            <li>Save &amp; Delete both require confirmation dialog</li>
+          </ul>
+          <p style="margin-top:12px;font-size:0.88rem;">
+            Logic: <a href="./ViewModels/AdminWindowViewModel.cs"><code>ViewModels/AdminWindowViewModel.cs</code></a> &middot;
+            <a href="./Views/AdminWindow.axaml"><code>Views/AdminWindow.axaml</code></a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database -->
+    <div class="card" id="database">
+      <div class="section-header">
+        <div class="section-icon icon-blue">&#x1F5C4;&#xFE0F;</div>
+        <h2>Database (PostgreSQL)</h2>
+      </div>
+      <p>Uses <code>Npgsql</code>. Connection string in
+        <a href="./appsettings.json"><code>appsettings.json</code></a>.
+        Schema: <a href="./sql/barcode_recipe_mappings.sql"><code>sql/barcode_recipe_mappings.sql</code></a>.
+        Data access: <a href="./Services/BarcodeLookupService.cs"><code>Services/BarcodeLookupService.cs</code></a>.
+      </p>
+      <div class="two-col">
+        <div class="sub-card">
+          <h3>Table: <code>barcode_recipe_mappings</code></h3>
+          <ul style="font-size:0.94rem;">
+            <li><code>object_id</code> &mdash; scanned barcode value (primary key)</li>
+            <li><code>recipe_name</code> &mdash; mapped recipe for script lookup</li>
+            <li><code>updated_at</code> &mdash; last-modified timestamp</li>
+          </ul>
+        </div>
+        <div class="sub-card">
+          <h3>Connection String</h3>
+          <div class="codeblock">
+            <div class="codeblock-bar">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green2"></div>
+              <span class="filename">appsettings.json</span>
+            </div>
+<pre>{
+  "ConnectionStrings": {
+    "BarcodeDb":
+      "Host=localhost;Database=barcode;
+       Username=postgres;Password=1234"
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RPA Engine -->
+    <div class="card" id="engine">
+      <div class="section-header">
+        <div class="section-icon icon-green">&#x2699;&#xFE0F;</div>
+        <h2>RPA Engine Integration</h2>
+      </div>
+      <p>Communicates with <code>rpa-engine</code> over HTTP.
+        Client: <a href="./Services/RpaEngineClient.cs"><code>Services/RpaEngineClient.cs</code></a>.
+      </p>
+      <div class="two-col">
+        <div class="sub-card">
+          <h3>Config (<code>appsettings.json</code>)</h3>
+          <div class="codeblock">
+            <div class="codeblock-bar">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green2"></div>
+              <span class="filename">appsettings.json</span>
+            </div>
+<pre>{
+  "RpaEngine": {
+    "BaseUrl":    "http://localhost:5000",
+    "ApiKey":     "",
+    "TargetName": ""
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="sub-card">
+          <h3>API Calls Made</h3>
+          <ul style="font-size:0.94rem;">
+            <li><code>GET /api/scripts</code> &mdash; returns all top-level <strong>folders</strong> and standalone <strong><code>.json</code> files</strong> from the engine's <code>scripts</code> directory. Used by the app to build the list for matching.</li>
+            <li><code>POST /run/{scriptName}</code> &mdash; triggers asynchronous script execution. Engine responds immediately with HTTP&nbsp;202 Accepted (<code>{"status":"started"}</code>); it does <strong>not</strong> wait for the script to finish.</li>
+          </ul>
+          <div class="badge-row">
+            <span class="badge"><code>ApiKey</code> &rarr; optional <code>X-API-Key</code> header</span>
+            <span class="badge"><code>TargetName</code> &rarr; optional <code>?target=&hellip;</code> param</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operator Flow -->
+    <div class="card" id="operator">
+      <div class="section-header">
+        <div class="section-icon icon-orange">&#x1F9D1;&#x200D;&#x1F3ED;</div>
+        <h2>Typical Operator Flow</h2>
+      </div>
+      <p>Step-by-step comparison for both scan modes from the operator's perspective.</p>
+      <div style="overflow-x:auto;margin-top:16px;">
+        <table class="flow-table">
+          <thead>
+            <tr>
+              <th style="width:52px;">#</th>
+              <th>&#x1F7E0; Object ID Mode</th>
+              <th>&#x1F535; Recipe Mode</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="step-num">1</span></td>
+              <td>Leave mode set to <code>Object ID</code></td>
+              <td>Switch mode to <code>Recipe</code></td>
+            </tr>
+            <tr>
+              <td><span class="step-num">2</span></td>
+              <td>Scanner reads barcode label</td>
+              <td>Scanner reads recipe name label</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">3</span></td>
+              <td>App queries <code>object_id &rarr; recipe_name</code> in PostgreSQL</td>
+              <td><em style="color:var(--muted);">DB lookup skipped</em></td>
+            </tr>
+            <tr>
+              <td><span class="step-num">4</span></td>
+              <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
+                Both paths: app resolves the best matching engine script
+              </td>
+            </tr>
+            <tr>
+              <td><span class="step-num">5</span></td>
+              <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
+                Both paths: app calls <code>POST /run/{scriptName}</code> on rpa-engine
+              </td>
+            </tr>
+            <tr>
+              <td><span class="step-num">6</span></td>
+              <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
+                Both paths: status text updates with result (success or error)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Build & Run -->
+    <div class="card" id="build">
+      <div class="section-header">
+        <div class="section-icon icon-green">&#x1F528;</div>
+        <h2>Build &amp; Run</h2>
+      </div>
+      <div class="codeblock">
+        <div class="codeblock-bar">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green2"></div>
+          <span class="filename">PowerShell / Terminal</span>
+        </div>
+<pre># Build the solution
+dotnet build .\fuji-barcode.slnx
+
+# Run the application
+dotnet run --project .\fuji-barcode.csproj
+
+# Run unit tests
+dotnet test ..\fuji-barcode.Tests\fuji-barcode.Tests.csproj</pre>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card" id="notes">
+      <div class="section-header">
+        <div class="section-icon icon-orange">&#x1F4CB;</div>
+        <h2>Notes</h2>
+      </div>
+      <div class="note-list">
+        <div class="note-item">
+          <span class="note-icon">&#x1F9EA;</span>
+          <div><strong>Test coverage:</strong> the test project currently covers script resolution logic only &mdash; not UI or live database flows.</div>
+        </div>
+        <div class="note-item">
+          <span class="note-icon">&#x2328;&#xFE0F;</span>
+          <div><strong>Scanner assumption:</strong> the barcode scanner is expected to behave like a keyboard and send an <kbd style="font-family:var(--mono);background:var(--border);padding:1px 5px;border-radius:4px;font-size:0.82rem;">Enter</kbd> keystroke after each scan.</div>
+        </div>
+        <div class="note-item">
+          <span class="note-icon">&#x2699;&#xFE0F;</span>
+          <div><strong>Defaults:</strong> the app defaults to a local PostgreSQL instance and local <code>rpa-engine</code> settings defined in <code>appsettings.json</code>.</div>
+        </div>
+        <div class="note-item">
+          <span class="note-icon">&#x26A0;&#xFE0F;</span>
+          <div><strong>Known warning:</strong> current builds may show a transitive <code>Tmds.DBus.Protocol</code> warning from the Avalonia dependency chain. Known upstream issue; does not affect functionality.</div>
+        </div>
+      </div>
+    </div>
+
+
+    <footer>
+      Built from <a href="./README.md">README.md</a> as a static local HTML handoff.
+    </footer>
+
+  </main>
+</body>
+</html>

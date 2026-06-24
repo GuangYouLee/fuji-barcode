@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="fuji-barcode.csproj" />
+  <Project Path="fuji-barcode.Tests\fuji-barcode.Tests.csproj" />
+</Solution>

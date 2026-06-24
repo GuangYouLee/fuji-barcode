@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:fuji_barcode.ViewModels"
+        xmlns:m="clr-namespace:fuji_barcode.Models"
+        mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="480"
+        x:Class="fuji_barcode.Views.AdminWindow"
+        x:DataType="vm:AdminWindowViewModel"
+        Title="Barcode Mapping Admin"
+        Width="720" Height="480"
+        WindowStartupLocation="CenterOwner">
+  <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*,*">
+    <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+               Text="Create, update, or delete barcode mappings"
+               FontSize="18"
+               FontWeight="SemiBold" />
+
+    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0" ColumnDefinitions="*,*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
+      <TextBox Grid.Column="0"
+               Text="{Binding ObjectIdInput}"
+               Watermark="Object ID" />
+      <TextBox Grid.Column="1"
+               Text="{Binding RecipeNameInput}"
+               Watermark="Recipe name" />
+      <Button Grid.Column="2"
+              Content="Save"
+              Click="ConfirmSaveClick"
+              IsDefault="True"
+              MinWidth="90" />
+      <Button Grid.Column="3"
+              Content="Delete"
+              Click="ConfirmDeleteClick"
+              MinWidth="90" />
+      <Button Grid.Column="4"
+              Content="New"
+              Command="{Binding ClearCommand}"
+              MinWidth="90" />
+      <Button Grid.Column="5"
+              Content="Refresh"
+              Command="{Binding LoadCommand}"
+              MinWidth="90" />
+    </Grid>
+
+    <TextBlock Grid.Row="2" Grid.ColumnSpan="2"
+               Margin="0,12,0,0"
+               Text="{Binding StatusText}"
+               TextWrapping="Wrap" />
+
+    <Border Grid.Row="3" Grid.ColumnSpan="2"
+            Margin="0,12,0,0"
+            BorderBrush="#D0D7DE"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="8">
+      <Grid RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="2*,2*,*" Margin="0,0,0,8">
+          <TextBlock Grid.Column="0" Text="Object ID" FontWeight="Bold" />
+          <TextBlock Grid.Column="1" Text="Recipe" FontWeight="Bold" />
+          <TextBlock Grid.Column="2" Text="Updated" FontWeight="Bold" />
+        </Grid>
+
+        <ListBox Grid.Row="1"
+                 ItemsSource="{Binding Mappings}"
+                 SelectedItem="{Binding SelectedMapping}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="m:BarcodeRecipeMapping">
+              <Grid ColumnDefinitions="2*,2*,*" Margin="0,4">
+                <TextBlock Grid.Column="0" Text="{Binding ObjectId}" />
+                <TextBlock Grid.Column="1" Text="{Binding RecipeName}" />
+                <TextBlock Grid.Column="2" Text="{Binding UpdatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

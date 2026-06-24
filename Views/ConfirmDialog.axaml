@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="180"
+        x:Class="fuji_barcode.Views.ConfirmDialog"
+        Width="420" Height="180"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <Grid Margin="16" RowDefinitions="*,Auto">
+    <TextBlock Name="MessageTextBlock"
+               TextWrapping="Wrap"
+               VerticalAlignment="Center" />
+
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Spacing="8">
+      <Button Name="ConfirmButton"
+              Content="Confirm"
+              IsDefault="True"
+              Click="ConfirmClick"
+              MinWidth="90" />
+      <Button Content="Cancel"
+              IsCancel="True"
+              Click="CancelClick"
+              MinWidth="90" />
+    </StackPanel>
+  </Grid>
+</Window>
