@@ -515,7 +515,7 @@
         </p>
         <div class="hero-badges">
           <span class="pill orange">C# / Avalonia UI</span>
-          <span class="pill blue">PostgreSQL (Npgsql)</span>
+          <span class="pill blue">SQLite (embedded)</span>
           <span class="pill green">rpa-engine HTTP API</span>
           <span class="pill orange">MVVM + DI</span>
         </div>
@@ -527,7 +527,7 @@
         </div>
         <div class="meta-card">
           <div class="meta-label">Scan Modes</div>
-          <div class="meta-value">Object ID &middot; Recipe</div>
+          <div class="meta-value">Log ID &middot; Recipe</div>
         </div>
         <div class="meta-card">
           <div class="meta-label">Output</div>
@@ -564,7 +564,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F5C4;&#xFE0F;</div>
             <div class="step-label">Step 2</div>
-            <div class="step-desc">Resolve to a <strong>recipe name</strong> — direct or via PostgreSQL lookup</div>
+            <div class="step-desc">Resolve to a <strong>recipe name</strong> — direct or via SQLite lookup</div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -607,10 +607,10 @@
       <p>The operator selects a mode before scanning. Both paths converge at Step 3 (script fetch).</p>
       <div class="mode-split">
         <div class="mode-box orange">
-          <h3>&#x1F7E0; Object ID Mode</h3>
+          <h3>&#x1F7E0; Log ID Mode</h3>
           <ul>
-            <li>Scanned value = an <strong>object identifier</strong></li>
-            <li>App queries PostgreSQL table <code>barcode_recipe_mappings</code></li>
+            <li>Scanned value = a <strong>log identifier</strong></li>
+            <li>App queries SQLite table <code>barcode_recipe_mappings</code></li>
             <li>DB returns <code>recipe_name</code> &rarr; continues to script fetch</li>
           </ul>
         </div>
@@ -667,7 +667,7 @@
           <p>The primary operator-facing window. Built for speed — scan in, result out.</p>
           <ul style="font-size:0.94rem;">
             <li>Single scan input box, auto-focused on load</li>
-            <li>Mode toggle: <code>Object ID</code> / <code>Recipe</code></li>
+            <li>Mode toggle: <code>Log ID</code> / <code>Recipe</code></li>
             <li>Submit via <kbd style="font-family:var(--mono);background:var(--border);padding:1px 5px;border-radius:4px;font-size:0.82rem;">Enter</kbd> or button</li>
             <li>Input clears automatically after each scan</li>
             <li>Guarded by <code>IsBusy</code> — no duplicate triggers</li>
@@ -681,7 +681,7 @@
           <h3>Admin Screen (Mappings CRUD)</h3>
           <p>Maintains the <code>barcode_recipe_mappings</code> table from within the app.</p>
           <ul style="font-size:0.94rem;">
-            <li><strong>Create:</strong> enter Object ID + Recipe &rarr; Save</li>
+            <li><strong>Create:</strong> enter Log ID + Recipe &rarr; Save</li>
             <li><strong>Read:</strong> click Refresh to load mappings list</li>
             <li><strong>Update:</strong> select row &rarr; edit &rarr; Save</li>
             <li><strong>Delete:</strong> select row or enter ID &rarr; Delete</li>
@@ -699,39 +699,42 @@
     <div class="card" id="database">
       <div class="section-header">
         <div class="section-icon icon-blue">&#x1F5C4;&#xFE0F;</div>
-        <h2>Database (PostgreSQL)</h2>
+        <h2>Database (SQLite)</h2>
       </div>
-      <p>Uses <code>Npgsql</code>. Connection string in
-        <a href="./appsettings.json"><code>appsettings.json</code></a>.
-        Schema: <a href="./sql/barcode_recipe_mappings.sql"><code>sql/barcode_recipe_mappings.sql</code></a>.
-        Data access: <a href="./Services/BarcodeLookupService.cs"><code>Services/BarcodeLookupService.cs</code></a>.
+      <p>Uses embedded <strong>SQLite</strong> via <code>Microsoft.Data.Sqlite</code> — no external database server required.
+        Schema creation and data access: <a href="./Services/BarcodeLookupService.cs"><code>Services/BarcodeLookupService.cs</code></a>.
+      </p>
+      <p>The database file is created automatically in the per-user local app-data folder, alongside <code>user-preferences.json</code>.
+        On Windows that is <code>C:\Users\&lt;username&gt;\AppData\Local\fuji-barcode\barcode.db</code>.
+        On Linux it resolves through .NET's <code>LocalApplicationData</code> path.
       </p>
       <div class="two-col">
         <div class="sub-card">
           <h3>Table: <code>barcode_recipe_mappings</code></h3>
           <ul style="font-size:0.94rem;">
-            <li><code>object_id</code> &mdash; scanned barcode value (primary key)</li>
+            <li><code>log_id</code> &mdash; scanned barcode value (primary key)</li>
             <li><code>recipe_name</code> &mdash; mapped recipe for script lookup</li>
-            <li><code>updated_at</code> &mdash; last-modified timestamp</li>
+            <li><code>updated_at</code> &mdash; last-modified timestamp (ISO 8601 text)</li>
           </ul>
         </div>
         <div class="sub-card">
-          <h3>Connection String</h3>
+          <h3>File Location</h3>
           <div class="codeblock">
             <div class="codeblock-bar">
               <div class="dot red"></div>
               <div class="dot yellow"></div>
               <div class="dot green2"></div>
-              <span class="filename">appsettings.json</span>
+              <span class="filename">barcode.db</span>
             </div>
-<pre>{
-  "ConnectionStrings": {
-    "BarcodeDb":
-      "Host=localhost;Database=barcode;
-       Username=postgres;Password=1234"
-  }
-}</pre>
+<pre>Windows:
+C:\Users\&lt;username&gt;\AppData\Local\fuji-barcode\barcode.db
+
+Linux:
+~/.local/share/fuji-barcode/barcode.db</pre>
           </div>
+          <p style="margin-top:10px;font-size:0.88rem;color:var(--muted);">
+            Stored beside <code>user-preferences.json</code> in the per-user local app-data folder.
+          </p>
         </div>
       </div>
     </div>
@@ -790,14 +793,14 @@
           <thead>
             <tr>
               <th style="width:52px;">#</th>
-              <th>&#x1F7E0; Object ID Mode</th>
+              <th>&#x1F7E0; Log ID Mode</th>
               <th>&#x1F535; Recipe Mode</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><span class="step-num">1</span></td>
-              <td>Leave mode set to <code>Object ID</code></td>
+              <td>Leave mode set to <code>Log ID</code></td>
               <td>Switch mode to <code>Recipe</code></td>
             </tr>
             <tr>
@@ -807,7 +810,7 @@
             </tr>
             <tr>
               <td><span class="step-num">3</span></td>
-              <td>App queries <code>object_id &rarr; recipe_name</code> in PostgreSQL</td>
+              <td>App queries <code>log_id &rarr; recipe_name</code> in SQLite</td>
               <td><em style="color:var(--muted);">DB lookup skipped</em></td>
             </tr>
             <tr>
@@ -874,7 +877,7 @@ dotnet test ..\fuji-barcode.Tests\fuji-barcode.Tests.csproj</pre>
         </div>
         <div class="note-item">
           <span class="note-icon">&#x2699;&#xFE0F;</span>
-          <div><strong>Defaults:</strong> the app defaults to a local PostgreSQL instance and local <code>rpa-engine</code> settings defined in <code>appsettings.json</code>.</div>
+          <div><strong>Defaults:</strong> the app uses an embedded SQLite database (no external database server required). The DB file is stored in the per-user local app-data folder alongside <code>user-preferences.json</code> — no PostgreSQL install needed.</div>
         </div>
         <div class="note-item">
           <span class="note-icon">&#x26A0;&#xFE0F;</span>

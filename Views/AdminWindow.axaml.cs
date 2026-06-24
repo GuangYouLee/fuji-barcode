@@ -16,19 +16,19 @@ public partial class AdminWindow : Window
         if (DataContext is not AdminWindowViewModel vm)
             return;
 
-        var objectId = vm.ObjectIdInput.Trim();
+        var logId = vm.LogIdInput.Trim();
         var recipeName = vm.RecipeNameInput.Trim();
-        if (string.IsNullOrEmpty(objectId) || string.IsNullOrEmpty(recipeName))
+        if (string.IsNullOrEmpty(logId) || string.IsNullOrEmpty(recipeName))
         {
             await vm.SaveCommand.ExecuteAsync(null);
             return;
         }
 
-        var isUpdate = vm.SelectedMapping?.ObjectId == objectId;
+        var isUpdate = vm.SelectedMapping?.LogId == logId;
         var action = isUpdate ? "Update" : "Create";
         var dialog = new ConfirmDialog(
             $"{action} Mapping",
-            $"{action} mapping for '{objectId}' to recipe '{recipeName}'?",
+            $"{action} mapping for '{logId}' to recipe '{recipeName}'?",
             action);
 
         if (await dialog.ShowDialog<bool>(this))
@@ -42,8 +42,8 @@ public partial class AdminWindow : Window
         if (DataContext is not AdminWindowViewModel vm)
             return;
 
-        var objectId = vm.ObjectIdInput.Trim();
-        if (string.IsNullOrEmpty(objectId))
+        var logId = vm.LogIdInput.Trim();
+        if (string.IsNullOrEmpty(logId))
         {
             await vm.DeleteCommand.ExecuteAsync(null);
             return;
@@ -51,7 +51,7 @@ public partial class AdminWindow : Window
 
         var dialog = new ConfirmDialog(
             "Delete Mapping",
-            $"Delete mapping for '{objectId}'?",
+            $"Delete mapping for '{logId}'?",
             "Delete");
 
         if (await dialog.ShowDialog<bool>(this))

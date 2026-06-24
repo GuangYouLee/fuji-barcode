@@ -13,7 +13,7 @@ public partial class AdminWindowViewModel : ObservableObject
     public ObservableCollection<BarcodeRecipeMapping> Mappings { get; } = [];
 
     [ObservableProperty]
-    private string _objectIdInput = "";
+    private string _logIdInput = "";
 
     [ObservableProperty]
     private string _recipeNameInput = "";
@@ -48,7 +48,7 @@ public partial class AdminWindowViewModel : ObservableObject
         DeleteCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnObjectIdInputChanged(string value)
+    partial void OnLogIdInputChanged(string value)
     {
         DeleteCommand.NotifyCanExecuteChanged();
     }
@@ -61,7 +61,7 @@ public partial class AdminWindowViewModel : ObservableObject
             return;
         }
 
-        ObjectIdInput = value.ObjectId;
+        LogIdInput = value.LogId;
         RecipeNameInput = value.RecipeName;
         DeleteCommand.NotifyCanExecuteChanged();
     }
@@ -75,6 +75,7 @@ public partial class AdminWindowViewModel : ObservableObject
 
         try
         {
+            await _lookupService.EnsureDatabaseReadyAsync();
             await ReloadMappingsAsync();
             StatusText = $"Loaded {Mappings.Count} mapping(s)";
         }
@@ -93,12 +94,12 @@ public partial class AdminWindowViewModel : ObservableObject
         if (IsBusy)
             return;
 
-        var objectId = ObjectIdInput.Trim();
+        var logId = LogIdInput.Trim();
         var recipeName = RecipeNameInput.Trim();
 
-        if (string.IsNullOrEmpty(objectId) || string.IsNullOrEmpty(recipeName))
+        if (string.IsNullOrEmpty(logId) || string.IsNullOrEmpty(recipeName))
         {
-            StatusText = "Object ID and recipe name are required";
+            StatusText = "Log ID and recipe name are required";
             return;
         }
 
@@ -106,10 +107,10 @@ public partial class AdminWindowViewModel : ObservableObject
 
         try
         {
-            await _lookupService.UpsertMappingAsync(objectId, recipeName);
+            await _lookupService.UpsertMappingAsync(logId, recipeName);
             await ReloadMappingsAsync();
             ClearForm();
-            StatusText = $"Saved mapping for '{objectId}'";
+            StatusText = $"Saved mapping for '{logId}'";
         }
         catch (Exception ex)
         {
@@ -126,10 +127,10 @@ public partial class AdminWindowViewModel : ObservableObject
         if (IsBusy)
             return;
 
-        var objectId = ObjectIdInput.Trim();
-        if (string.IsNullOrEmpty(objectId))
+        var logId = LogIdInput.Trim();
+        if (string.IsNullOrEmpty(logId))
         {
-            StatusText = "Select or enter an Object ID to delete";
+            StatusText = "Select or enter a Log ID to delete";
             return;
         }
 
@@ -137,12 +138,12 @@ public partial class AdminWindowViewModel : ObservableObject
 
         try
         {
-            var deleted = await _lookupService.DeleteMappingAsync(objectId);
+            var deleted = await _lookupService.DeleteMappingAsync(logId);
             await ReloadMappingsAsync();
             ClearForm();
             StatusText = deleted
-                ? $"Deleted mapping for '{objectId}'"
-                : $"No mapping found for '{objectId}'";
+                ? $"Deleted mapping for '{logId}'"
+                : $"No mapping found for '{logId}'";
         }
         catch (Exception ex)
         {
@@ -156,13 +157,13 @@ public partial class AdminWindowViewModel : ObservableObject
 
     private bool CanDelete()
     {
-        return !IsBusy && !string.IsNullOrWhiteSpace(ObjectIdInput);
+        return !IsBusy && !string.IsNullOrWhiteSpace(LogIdInput);
     }
 
     private void ClearForm()
     {
         SelectedMapping = null;
-        ObjectIdInput = "";
+        LogIdInput = "";
         RecipeNameInput = "";
     }
 

@@ -6,3 +6,4 @@ obj/
 .vs/
 *.user
 *.suo
+fuji-barcode.Tests/

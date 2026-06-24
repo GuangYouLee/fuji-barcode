@@ -8,9 +8,9 @@ The app accepts barcode scans from a keyboard-wedge scanner and turns them into 
 
 It supports two scan modes:
 
-- `Object ID`
-  - The scanned value is treated as an object ID.
-  - The app looks up that object ID in PostgreSQL table `barcode_recipe_mappings`.
+- `Log ID`
+  - The scanned value is treated as a log ID.
+  - The app looks up that log ID in the local SQLite `barcode_recipe_mappings` table.
   - The lookup returns a `recipe_name`.
 
 - `Recipe`
@@ -47,7 +47,7 @@ The main window is the operator screen.
 It has:
 
 - one scan input box
-- mode toggle: `Object ID` or `Recipe`
+- mode toggle: `Log ID` or `Recipe`
 - `Submit` button
 - `Admin` button
 - status text
@@ -68,7 +68,7 @@ The admin screen is for maintaining barcode-to-recipe mappings inside the app.
 It supports CRUD:
 
 - `Create`
-  - enter `Object ID` and `Recipe name`
+  - enter `Log ID` and `Recipe name`
   - click `Save`
 - `Read`
   - click `Refresh`
@@ -78,7 +78,7 @@ It supports CRUD:
   - edit the values
   - click `Save`
 - `Delete`
-  - select a row or enter an object ID
+  - select a row or enter a log ID
   - click `Delete`
 
 Mutating actions have confirmation dialogs:
@@ -93,33 +93,26 @@ Admin logic is in:
 
 ## Database
 
-The app uses PostgreSQL through `Npgsql`.
+The app uses an embedded SQLite database (no external database server required).
 
-Current connection string is in [appsettings.json](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\appsettings.json):
+The database file is automatically created in the per-user local app-data folder at:
 
-```json
-{
-  "ConnectionStrings": {
-    "BarcodeDb": "Host=localhost;Database=barcode;Username=postgres;Password=1234"
-  }
-}
-```
+- **Windows:** `C:\Users\<username>\AppData\Local\fuji-barcode\barcode.db`
+- **Linux:** `~/.local/share/fuji-barcode/barcode.db` (or equivalent `XDG_DATA_HOME`)
 
-Schema file:
-
-- [sql/barcode_recipe_mappings.sql](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\sql\barcode_recipe_mappings.sql)
+The file is placed in the same folder as `user-preferences.json`.
 
 Table structure:
 
-- `object_id`
+- `log_id`
   - scanned barcode value
   - primary key
 - `recipe_name`
   - recipe used for script lookup
 - `updated_at`
-  - last update timestamp
+  - last update timestamp (ISO 8601 text)
 
-Database access lives in [Services/BarcodeLookupService.cs](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\Services\BarcodeLookupService.cs).
+The table schema is created automatically by [Services/BarcodeLookupService.cs](Services/BarcodeLookupService.cs) on startup.
 
 ## RPA Engine
 
@@ -152,11 +145,11 @@ Client implementation:
 
 ## Typical Operator Flow
 
-### Object ID mode
+### Log ID mode
 
-1. operator leaves mode on `Object ID`
+1. operator leaves mode on `Log ID`
 2. scanner scans barcode
-3. app looks up `object_id -> recipe_name` in PostgreSQL
+3. app looks up `log_id -> recipe_name` in local SQLite
 4. app resolves the matching engine script
 5. app triggers `rpa-engine` run API
 6. app shows result in status text
@@ -192,7 +185,8 @@ dotnet test .\fuji-barcode.Tests\fuji-barcode.Tests.csproj
 
 ## Notes
 
-- The test project currently covers script resolution logic, not UI or live database flows.
+- The test project currently covers script resolution logic and storage service.
 - The app assumes the barcode scanner acts like a keyboard and sends Enter.
-- The app currently uses local PostgreSQL and local/default `rpa-engine` settings from `appsettings.json`.
+- The app uses an embedded SQLite database — no PostgreSQL installation required.
+- The database file is stored in the per-user local app-data folder, same as `user-preferences.json`.
 - Current builds may still show the known transitive `Tmds.DBus.Protocol` warning from the Avalonia dependency chain.

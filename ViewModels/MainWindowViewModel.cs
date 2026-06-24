@@ -10,19 +10,23 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly BarcodeLookupService _lookupService;
     private readonly RpaEngineClient _rpaClient;
+    private readonly string _scanModePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "fuji-barcode",
+        "user-preferences.json");
 
     [ObservableProperty]
     private string _scanText = "";
 
     [ObservableProperty]
-    private ScanMode _scanMode = ScanMode.ObjectId;
+    private ScanMode _scanMode = ScanMode.LogId;
 
     public bool CanScan => !IsBusy;
 
-    public bool IsObjectIdMode
+    public bool IsLogIdMode
     {
-        get => ScanMode == ScanMode.ObjectId;
-        set { if (value) ScanMode = ScanMode.ObjectId; }
+        get => ScanMode == ScanMode.LogId;
+        set { if (value) ScanMode = ScanMode.LogId; }
     }
 
     public bool IsRecipeMode
@@ -33,8 +37,13 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnScanModeChanged(ScanMode value)
     {
-        OnPropertyChanged(nameof(IsObjectIdMode));
+        OnPropertyChanged(nameof(IsLogIdMode));
         OnPropertyChanged(nameof(IsRecipeMode));
+
+        if (!TrySaveScanMode(value))
+        {
+            StatusText = "Warning: could not save last mode selection";
+        }
     }
 
     [ObservableProperty]
@@ -50,12 +59,65 @@ public partial class MainWindowViewModel : ObservableObject
         _lookupService = lookupService;
         _rpaClient = rpaClient;
         SubmitCommand = new AsyncRelayCommand(ProcessScanAsync, () => !IsBusy);
+        _scanMode = LoadScanMode();
     }
 
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanScan));
         SubmitCommand.NotifyCanExecuteChanged();
+    }
+
+    public async Task InitializeAsync()
+    {
+        IsBusy = true;
+        StatusText = "Checking database...";
+
+        try
+        {
+            await _lookupService.EnsureDatabaseReadyAsync();
+            StatusText = "Ready";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Database init failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private ScanMode LoadScanMode()
+    {
+        if (!File.Exists(_scanModePath))
+            return ScanMode.LogId;
+
+        try
+        {
+            var text = File.ReadAllText(_scanModePath);
+            return Enum.TryParse<ScanMode>(text, ignoreCase: true, out var mode) && Enum.IsDefined(mode)
+                ? mode
+                : ScanMode.LogId;
+        }
+        catch
+        {
+            return ScanMode.LogId;
+        }
+    }
+
+    private bool TrySaveScanMode(ScanMode scanMode)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_scanModePath)!);
+            File.WriteAllText(_scanModePath, scanMode.ToString());
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private async Task ProcessScanAsync()
@@ -77,12 +139,12 @@ public partial class MainWindowViewModel : ObservableObject
         {
             string recipeName;
 
-            if (ScanMode == ScanMode.ObjectId)
+            if (ScanMode == ScanMode.LogId)
             {
                 var recipe = await _lookupService.LookupRecipeAsync(input);
                 if (recipe == null)
                 {
-                    StatusText = $"Object ID '{input}' not found";
+                    StatusText = $"Log ID '{input}' not found";
                     return;
                 }
                 recipeName = recipe;
