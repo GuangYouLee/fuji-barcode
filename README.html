@@ -497,6 +497,7 @@
     <a href="#database">Database</a>
     <a href="#engine">RPA Engine</a>
     <a href="#operator">Operator Flow</a>
+    <a href="#install">Install</a>
     <a href="#build">Build &amp; Run</a>
     <a href="#notes">Notes</a>
 
@@ -750,7 +751,7 @@ Linux:
       </p>
       <div class="two-col">
         <div class="sub-card">
-          <h3>Config (<code>appsettings.json</code>)</h3>
+          <h3>Config (<code>appsettings.default.json</code>)</h3>
           <div class="codeblock">
             <div class="codeblock-bar">
               <div class="dot red"></div>
@@ -833,6 +834,61 @@ Linux:
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Install -->
+    <div class="card" id="install">
+      <div class="section-header">
+        <div class="section-icon icon-green">&#x1F4E6;</div>
+        <h2>Install</h2>
+      </div>
+      <div class="two-col">
+        <div class="sub-card">
+          <h3>Windows</h3>
+          <p>Use the MSI build script, then install the generated package.</p>
+          <div class="codeblock">
+            <div class="codeblock-bar">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green2"></div>
+              <span class="filename">PowerShell</span>
+            </div>
+<pre>powershell -ExecutionPolicy Bypass -File .\packaging\windows\build-msi.ps1</pre>
+          </div>
+          <p style="margin-top:12px;">Installer output: <code>artifacts/installers/fuji-barcode-win-x64.msi</code></p>
+          <ol style="font-size:0.94rem;margin-top:10px;">
+            <li>Double-click <code>fuji-barcode-win-x64.msi</code></li>
+            <li>Follow the Windows Installer prompts</li>
+            <li>Launch <code>Fuji Barcode</code> from the desktop or Start Menu shortcut</li>
+            <li>Edit <code>C:\Users\&lt;username&gt;\AppData\Local\fuji-barcode\appsettings.json</code> if the <code>rpa-engine</code> settings need to change</li>
+          </ol>
+          <div class="badge-row">
+            <span class="badge">Self-contained Windows x64 MSI</span>
+          </div>
+        </div>
+        <div class="sub-card">
+          <h3>Linux</h3>
+          <p>There is no Linux installer package in this repo now. Publish and copy the app folder manually.</p>
+          <div class="codeblock">
+            <div class="codeblock-bar">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green2"></div>
+              <span class="filename">bash</span>
+            </div>
+<pre>dotnet publish ./fuji-barcode.csproj -c Release -r linux-x64 --self-contained true -o ./artifacts/publish/linux-x64</pre>
+          </div>
+          <ol style="font-size:0.94rem;margin-top:10px;">
+            <li>Copy <code>./artifacts/publish/linux-x64/</code> to the target Linux machine</li>
+            <li>Make the binary executable if needed: <code>chmod +x ./fuji-barcode</code></li>
+            <li>Run the app from that folder: <code>./fuji-barcode</code></li>
+            <li>Edit <code>~/.local/share/fuji-barcode/appsettings.json</code> if the <code>rpa-engine</code> settings need to change</li>
+          </ol>
+          <div class="badge-row">
+            <span class="badge">Manual Linux install</span>
+          </div>
+        </div>
       </div>
     </div>
 

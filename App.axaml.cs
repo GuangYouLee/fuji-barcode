@@ -34,8 +34,29 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
+        var localAppData = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "fuji-barcode");
+
+        Directory.CreateDirectory(localAppData);
+
+        var localConfigPath = Path.Combine(localAppData, "appsettings.json");
+        var legacyConfigPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        var defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "appsettings.default.json");
+        if (!File.Exists(localConfigPath))
+        {
+            var seedConfigPath = File.Exists(legacyConfigPath)
+                ? legacyConfigPath
+                : defaultConfigPath;
+
+            if (File.Exists(seedConfigPath))
+            {
+                File.Copy(seedConfigPath, localConfigPath);
+            }
+        }
+
         var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .AddJsonFile(localConfigPath, optional: false, reloadOnChange: false)
             .Build();
         services.AddSingleton<IConfiguration>(config);
         services.AddSingleton<BarcodeLookupService>();

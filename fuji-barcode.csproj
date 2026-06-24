@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="appsettings.json" />
-    <Content Include="appsettings.json">
+    <None Remove="appsettings.default.json" />
+    <Content Include="appsettings.default.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

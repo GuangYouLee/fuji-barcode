@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Fuji Barcode"
+           Manufacturer="Fuji Barcode"
+           Version="1.0.0"
+           UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+
+    <Property Id="LEGACYCONFIGDIR">
+      <DirectorySearch Id="LegacyProgramFilesSearch" Path="[ProgramFiles64Folder]">
+        <DirectorySearch Id="LegacyInstallDirSearch"
+                         Path="Fuji Barcode"
+                         AssignToProperty="yes">
+          <FileSearch Id="LegacyConfigFileSearch" Name="appsettings.json" />
+        </DirectorySearch>
+      </DirectorySearch>
+    </Property>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Fuji Barcode" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="LOCALAPPDATAFUJIBARCODE" Name="fuji-barcode">
+        <Component Id="LegacyConfigMigrationComponent"
+                   Guid="*"
+                   Condition="NOT Installed AND WIX_UPGRADE_DETECTED AND LEGACYCONFIGDIR">
+          <CopyFile Id="MigrateLegacyConfigToLocalAppData"
+                    SourceProperty="LEGACYCONFIGDIR"
+                    SourceName="appsettings.json"
+                    DestinationDirectory="LOCALAPPDATAFUJIBARCODE"
+                    DestinationName="appsettings.json" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\FujiBarcode"
+                         Name="LegacyConfigMigrated"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcutComponent" Guid="*">
+        <Shortcut Id="DesktopShortcut"
+                  Name="Fuji Barcode"
+                  Description="Fuji Barcode - Barcode-driven RPA execution"
+                  Target="[INSTALLFOLDER]fuji-barcode.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\FujiBarcode"
+                       Name="DesktopShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Fuji Barcode">
+        <Component Id="StartMenuShortcutComponent" Guid="*">
+          <Shortcut Id="StartMenuShortcut"
+                    Name="Fuji Barcode"
+                    Target="[INSTALLFOLDER]fuji-barcode.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\FujiBarcode"
+                         Name="StartMenuShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)\**">
+        <Exclude Files="$(var.PublishDir)\**\*.pdb" />
+      </Files>
+    </ComponentGroup>
+
+    <Feature Id="MainFeature" Title="Fuji Barcode" Level="1">
+      <ComponentGroupRef Id="AppComponents" />
+      <ComponentRef Id="LegacyConfigMigrationComponent" />
+      <ComponentRef Id="DesktopShortcutComponent" />
+      <ComponentRef Id="StartMenuShortcutComponent" />
+    </Feature>
+  </Package>
+</Wix>

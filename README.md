@@ -118,7 +118,7 @@ The table schema is created automatically by [Services/BarcodeLookupService.cs](
 
 The app talks to `rpa-engine` using HTTP.
 
-Config:
+Config is shipped as `appsettings.default.json`. On first launch the app copies it to `%LOCALAPPDATA%\fuji-barcode\appsettings.json`. Edit the LocalAppData copy. Default values:
 
 ```json
 {
@@ -162,6 +162,54 @@ Client implementation:
 4. app resolves the matching engine script
 5. app triggers `rpa-engine` run API
 6. app shows result in status text
+
+## Install
+
+### Windows
+
+For end users, build the MSI installer:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\packaging\windows\build-msi.ps1
+```
+
+Installer output:
+
+- `artifacts/installers/fuji-barcode-win-x64.msi`
+
+Install steps:
+
+1. double-click `fuji-barcode-win-x64.msi`
+2. follow the Windows Installer prompts
+3. launch `Fuji Barcode` from the desktop or Start Menu shortcut
+4. edit `C:\Users\<username>\AppData\Local\fuji-barcode\appsettings.json` if `rpa-engine` settings need to change
+
+Notes:
+
+- the MSI is self-contained for Windows x64
+- on first launch the app creates `barcode.db`, `user-preferences.json`, and `appsettings.json` under `AppData\Local\fuji-barcode`
+
+### Linux
+
+There is no Linux installer package in this repo now. Install by publishing and copying the app folder.
+
+Build a self-contained Linux publish:
+
+```bash
+dotnet publish ./fuji-barcode.csproj -c Release -r linux-x64 --self-contained true -o ./artifacts/publish/linux-x64
+```
+
+Install/run steps:
+
+1. copy `./artifacts/publish/linux-x64/` to the target Linux machine
+2. make the binary executable if needed: `chmod +x ./fuji-barcode`
+3. run the app from that folder: `./fuji-barcode`
+4. edit `~/.local/share/fuji-barcode/appsettings.json` if `rpa-engine` settings need to change
+
+Notes:
+
+- the app stores `barcode.db`, `user-preferences.json`, and `appsettings.json` under the Linux local app-data folder
+- the exact Linux data path follows .NET `LocalApplicationData` / `XDG_DATA_HOME`
 
 ## Build And Run
 
