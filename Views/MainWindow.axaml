@@ -18,14 +18,17 @@
 
     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" Spacing="12">
       <RadioButton Content="Log ID"
-                   IsChecked="{Binding IsLogIdMode}" />
+                   IsChecked="{Binding IsLogIdMode}"
+                   Checked="RefocusScanInput" />
       <RadioButton Content="Recipe"
-                   IsChecked="{Binding IsRecipeMode}" />
+                   IsChecked="{Binding IsRecipeMode}"
+                   Checked="RefocusScanInput" />
     </StackPanel>
 
     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0" Spacing="8">
       <Button Content="Submit"
               Command="{Binding SubmitCommand}"
+              Click="RefocusScanInput"
               IsDefault="True"
               MinWidth="90" />
       <Button Content="Admin"

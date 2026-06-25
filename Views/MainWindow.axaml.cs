@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using fuji_barcode.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ namespace fuji_barcode.Views;
 public partial class MainWindow : Window
 {
     private readonly IServiceProvider _serviceProvider;
+    private int _openAdminWindowCount;
 
     public MainWindow(IServiceProvider serviceProvider)
     {
@@ -22,6 +24,15 @@ public partial class MainWindow : Window
     {
         var adminWindow = _serviceProvider.GetRequiredService<AdminWindow>();
         adminWindow.DataContext = _serviceProvider.GetRequiredService<AdminWindowViewModel>();
+        _openAdminWindowCount++;
+        adminWindow.Closed += (_, _) =>
+        {
+            _openAdminWindowCount = Math.Max(0, _openAdminWindowCount - 1);
+            if (_openAdminWindowCount > 0)
+                return;
+
+            Dispatcher.UIThread.Post(() => { Activate(); ScanInput?.Focus(); });
+        };
 
         if (adminWindow.DataContext is AdminWindowViewModel vm)
         {
@@ -47,6 +58,11 @@ public partial class MainWindow : Window
         {
             await viewModel.InitializeAsync();
         }
+    }
+
+    private void RefocusScanInput(object? sender, RoutedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() => ScanInput?.Focus());
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
