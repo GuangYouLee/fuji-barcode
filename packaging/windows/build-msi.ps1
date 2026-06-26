@@ -12,6 +12,20 @@ if (-not (Test-Path $csproj)) {
     exit 1
 }
 
+Write-Host "Reading product version from project file..."
+[xml]$projectFile = Get-Content -Path $csproj
+$productVersion = $projectFile.Project.PropertyGroup.Version
+if ([string]::IsNullOrWhiteSpace($productVersion)) {
+    Write-Error "Failed to read Version from $csproj. Ensure a <Version> property exists."
+    exit 1
+}
+$productVersion = $productVersion.Trim()
+if ($productVersion -notmatch '^\d+\.\d+\.\d+$') {
+    Write-Error "MSI requires a three-part numeric version (major.minor.build) but got '$productVersion'. Update the <Version> property in $csproj."
+    exit 1
+}
+Write-Host "Product version resolved: $productVersion"
+
 try {
     New-Item -ItemType Directory -Path $publishRoot -Force | Out-Null
 
@@ -58,7 +72,7 @@ try {
         exit 1
     }
 
-    dotnet tool run wix build $wxsFile -o $msiOutput -d "PublishDir=$publishDir"
+    dotnet tool run wix build $wxsFile -o $msiOutput -d "PublishDir=$publishDir" -d "ProductVersion=$productVersion"
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
         Write-Error "WiX build failed"

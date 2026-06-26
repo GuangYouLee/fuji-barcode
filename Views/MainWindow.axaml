@@ -19,10 +19,10 @@
     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" Spacing="12">
       <RadioButton Content="Log ID"
                    IsChecked="{Binding IsLogIdMode}"
-                   Checked="RefocusScanInput" />
+                   Click="RefocusScanInput" />
       <RadioButton Content="Recipe"
                    IsChecked="{Binding IsRecipeMode}"
-                   Checked="RefocusScanInput" />
+                   Click="RefocusScanInput" />
     </StackPanel>
 
     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0" Spacing="8">
