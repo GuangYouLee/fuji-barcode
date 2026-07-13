@@ -499,6 +499,7 @@
     <a href="#operator">Operator Flow</a>
     <a href="#install">Install</a>
     <a href="#build">Build &amp; Run</a>
+    <a href="#engine-test">Engine Test</a>
     <a href="#notes">Notes</a>
 
   </nav>
@@ -913,6 +914,41 @@ dotnet run --project .\fuji-barcode.csproj
 
 # Run unit tests
 dotnet test ..\fuji-barcode.Tests\fuji-barcode.Tests.csproj</pre>
+      </div>
+    </div>
+
+    <!-- Engine Test -->
+    <div class="card" id="engine-test">
+      <div class="section-header">
+        <div class="section-icon icon-green">&#x1F9EA;</div>
+        <h2>Test With rpa-engine</h2>
+      </div>
+      <p>Use this flow to verify the real integration path from <code>fuji-barcode</code> into a running <code>rpa-engine</code>.</p>
+      <div class="two-col">
+        <div class="sub-card">
+          <h3>Setup</h3>
+          <ol style="font-size:0.94rem;">
+            <li>Start <code>rpa-engine</code> from <code>C:\Users\Lee Guang You\Documents\BioE Repo\rpa-engine\rpa-engine</code> with <code>dotnet run --project .\RpaLinux.csproj</code>.</li>
+            <li>Edit <code>C:\Users\&lt;username&gt;\AppData\Local\fuji-barcode\appsettings.json</code> and point <code>BaseUrl</code> to <code>http://localhost:5000</code>.</li>
+            <li>For local <code>localhost</code> testing, <code>ApiKey</code> may stay empty. For remote testing, copy the engine key from <code>Server:ApiKey</code> or <code>C:\rpa-data\generated-api-key.txt</code>.</li>
+            <li>Ensure the engine has a top-level script or folder matching the recipe, for example <code>group_script1_202605261129_V1.0</code>.</li>
+          </ol>
+        </div>
+        <div class="sub-card">
+          <h3>Run Checks</h3>
+          <ol style="font-size:0.94rem;">
+            <li>Run <code>fuji-barcode</code> with <code>dotnet run --project .\fuji-barcode.csproj</code>.</li>
+            <li>In <code>Recipe</code> mode, scan or type <code>group_script1</code>. Expected: recipe shown, script matched, then <code>Run OK: ...</code>.</li>
+            <li>In <code>Admin</code>, create mapping <code>TEST-BC-001 -&gt; group_script1</code>.</li>
+            <li>Back in <code>Log ID</code> mode, scan or type <code>TEST-BC-001</code>. Expected: resolved recipe, matched script, then <code>Run OK: ...</code>.</li>
+          </ol>
+          <div class="badge-row">
+            <span class="badge">Wrong BaseUrl -&gt; connection error</span>
+            <span class="badge">Missing mapping -&gt; Log ID not found</span>
+            <span class="badge">No script match -&gt; matching error</span>
+            <span class="badge">Wrong remote API key -&gt; 401 request failure</span>
+          </div>
+        </div>
       </div>
     </div>
 

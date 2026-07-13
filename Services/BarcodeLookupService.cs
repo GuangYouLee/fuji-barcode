@@ -12,6 +12,10 @@ public class BarcodeLookupService
             recipe_name TEXT NOT NULL,
             updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now'))
         );
+        CREATE TABLE IF NOT EXISTS settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        );
         """;
 
     public BarcodeLookupService(string? dbPath = null)
@@ -87,6 +91,30 @@ public class BarcodeLookupService
         cmd.CommandText = "DELETE FROM barcode_recipe_mappings WHERE log_id = @logId";
         cmd.Parameters.AddWithValue("@logId", logId);
         return await cmd.ExecuteNonQueryAsync() > 0;
+    }
+
+    public async Task<string?> GetSettingAsync(string key)
+    {
+        await using var conn = await OpenConnectionAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT value FROM settings WHERE key = @key LIMIT 1";
+        cmd.Parameters.AddWithValue("@key", key);
+        return await cmd.ExecuteScalarAsync() as string;
+    }
+
+    public async Task SetSettingAsync(string key, string? value)
+    {
+        await using var conn = await OpenConnectionAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO settings (key, value)
+            VALUES (@key, @value)
+            ON CONFLICT(key) DO UPDATE
+            SET value = @value
+            """;
+        cmd.Parameters.AddWithValue("@key", key);
+        cmd.Parameters.AddWithValue("@value", (object?)value ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task EnsureDatabaseReadyAsync()

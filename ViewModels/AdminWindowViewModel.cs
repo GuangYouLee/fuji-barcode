@@ -9,14 +9,19 @@ namespace fuji_barcode.ViewModels;
 public partial class AdminWindowViewModel : ObservableObject
 {
     private readonly BarcodeLookupService _lookupService;
+    private readonly RpaEngineClient _rpaClient;
 
     public ObservableCollection<BarcodeRecipeMapping> Mappings { get; } = [];
+    public ObservableCollection<string> AvailableScripts { get; } = [];
 
     [ObservableProperty]
     private string _logIdInput = "";
 
     [ObservableProperty]
     private string _recipeNameInput = "";
+
+    [ObservableProperty]
+    private string _globalScriptInput = "";
 
     [ObservableProperty]
     private string _statusText = "Ready";
@@ -30,14 +35,17 @@ public partial class AdminWindowViewModel : ObservableObject
     public IAsyncRelayCommand LoadCommand { get; }
     public IAsyncRelayCommand SaveCommand { get; }
     public IAsyncRelayCommand DeleteCommand { get; }
+    public IAsyncRelayCommand SaveGlobalScriptCommand { get; }
     public IRelayCommand ClearCommand { get; }
 
-    public AdminWindowViewModel(BarcodeLookupService lookupService)
+    public AdminWindowViewModel(BarcodeLookupService lookupService, RpaEngineClient rpaClient)
     {
         _lookupService = lookupService;
+        _rpaClient = rpaClient;
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !IsBusy);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
+        SaveGlobalScriptCommand = new AsyncRelayCommand(SaveGlobalScriptAsync, () => !IsBusy);
         ClearCommand = new RelayCommand(ClearForm);
     }
 
@@ -46,6 +54,7 @@ public partial class AdminWindowViewModel : ObservableObject
         LoadCommand.NotifyCanExecuteChanged();
         SaveCommand.NotifyCanExecuteChanged();
         DeleteCommand.NotifyCanExecuteChanged();
+        SaveGlobalScriptCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnLogIdInputChanged(string value)
@@ -77,6 +86,24 @@ public partial class AdminWindowViewModel : ObservableObject
         {
             await _lookupService.EnsureDatabaseReadyAsync();
             await ReloadMappingsAsync();
+
+            var globalScript = await _lookupService.GetSettingAsync("rpa_script_override");
+            GlobalScriptInput = globalScript ?? "";
+
+            AvailableScripts.Clear();
+            try
+            {
+                var scripts = await _rpaClient.ListScriptsAsync();
+                foreach (var script in scripts)
+                {
+                    AvailableScripts.Add(script.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load scripts from engine: {ex.Message}");
+            }
+
             StatusText = $"Loaded {Mappings.Count} mapping(s)";
         }
         catch (Exception ex)
@@ -111,6 +138,33 @@ public partial class AdminWindowViewModel : ObservableObject
             await ReloadMappingsAsync();
             ClearForm();
             StatusText = $"Saved mapping for '{logId}'";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SaveGlobalScriptAsync()
+    {
+        if (IsBusy)
+            return;
+
+        var script = GlobalScriptInput.Trim();
+        var savedScript = string.IsNullOrEmpty(script) ? null : script;
+
+        IsBusy = true;
+
+        try
+        {
+            await _lookupService.SetSettingAsync("rpa_script_override", savedScript);
+            StatusText = string.IsNullOrEmpty(script)
+                ? "Cleared global RPA script override (will auto-resolve by recipe)"
+                : $"Saved global RPA script override: '{script}'";
         }
         catch (Exception ex)
         {

@@ -157,9 +157,26 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             var scripts = await _rpaClient.ListScriptsAsync();
-            var matchedScript = RecipeScriptResolver.Resolve(scripts, recipeName);
+            string matchedScript;
 
-            StatusText = $"Matched script: {matchedScript}";
+            var globalScriptOverride = await _lookupService.GetSettingAsync("rpa_script_override");
+
+            if (!string.IsNullOrWhiteSpace(globalScriptOverride))
+            {
+                var exists = scripts.Any(s => s.Name.Equals(globalScriptOverride, StringComparison.OrdinalIgnoreCase));
+                if (!exists)
+                {
+                    StatusText = $"Global override script '{globalScriptOverride}' not found in RPA-engine";
+                    return;
+                }
+                matchedScript = scripts.First(s => s.Name.Equals(globalScriptOverride, StringComparison.OrdinalIgnoreCase)).Name;
+                StatusText = $"Using global override script: {matchedScript}";
+            }
+            else
+            {
+                matchedScript = RecipeScriptResolver.Resolve(scripts, recipeName);
+                StatusText = $"Matched script: {matchedScript}";
+            }
 
             var result = await _rpaClient.RunScriptAsync(matchedScript);
 

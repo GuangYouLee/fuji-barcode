@@ -231,6 +231,118 @@ Tests:
 dotnet test .\fuji-barcode.Tests\fuji-barcode.Tests.csproj
 ```
 
+## Test With rpa-engine
+
+Use this when you want to verify the real app-to-engine path instead of only unit tests.
+
+### 1. Start rpa-engine
+
+From `C:\Users\Lee Guang You\Documents\BioE Repo\rpa-engine\rpa-engine`:
+
+```powershell
+dotnet run --project .\RpaLinux.csproj
+```
+
+Expected:
+
+- engine listens on `http://localhost:5000`
+- `GET /api/scripts` returns the top-level script folders / `.json` files
+- `POST /run/{scriptName}` accepts runs
+
+If `Server:ApiKey` is empty in `rpa-engine\appsettings.json`, the engine may generate a key file at:
+
+- `C:\rpa-data\generated-api-key.txt`
+
+For local `localhost` testing, `fuji-barcode` can leave `RpaEngine:ApiKey` empty because loopback requests are allowed.
+
+### 2. Point fuji-barcode at the engine
+
+Edit the live app config:
+
+- `C:\Users\<username>\AppData\Local\fuji-barcode\appsettings.json`
+
+Use:
+
+```json
+{
+  "RpaEngine": {
+    "BaseUrl": "http://localhost:5000",
+    "ApiKey": "",
+    "TargetName": ""
+  }
+}
+```
+
+If you are calling a remote engine instead of `localhost`, set:
+
+- `BaseUrl` to the remote engine URL
+- `ApiKey` to the same value used by `rpa-engine` `Server:ApiKey`, or the contents of `C:\rpa-data\generated-api-key.txt`
+
+### 3. Prepare one known script in rpa-engine
+
+Make sure `rpa-engine` has at least one top-level script or script folder whose name matches the recipe you plan to scan.
+
+Example already present in the nearby engine repo:
+
+- script/package name: `group_script1_202605261129_V1.0`
+- recipe to scan: `group_script1`
+
+This works because [Helpers/RecipeScriptResolver.cs](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\Helpers\RecipeScriptResolver.cs) accepts exact matches first, then `recipeName_...` versioned matches.
+
+### 4. Run fuji-barcode
+
+From this repo:
+
+```powershell
+dotnet run --project .\fuji-barcode.csproj
+```
+
+### 5. Test Recipe mode
+
+1. switch the app to `Recipe`
+2. scan or type `group_script1`
+3. submit
+
+Expected status flow:
+
+- `Recipe: group_script1`
+- `Matched script: group_script1_202605261129_V1.0`
+- `Run OK: ...`
+
+If no script matches, the app should stop with a matching error instead of guessing.
+
+### 6. Test Log ID mode
+
+First add a mapping in the app's `Admin` screen:
+
+- `Log ID`: `TEST-BC-001`
+- `Recipe name`: `group_script1`
+
+Then:
+
+1. switch back to `Log ID`
+2. scan or type `TEST-BC-001`
+3. submit
+
+Expected status flow:
+
+- `Resolved recipe: group_script1`
+- `Matched script: group_script1_202605261129_V1.0`
+- `Run OK: ...`
+
+### 7. Quick failure checks
+
+Use these to confirm the integration errors are understandable:
+
+- wrong `BaseUrl`
+  - expected: `Connection error: ...`
+- missing barcode mapping in `Log ID` mode
+  - expected: `Log ID '...' not found`
+- no matching script in `rpa-engine`
+  - expected: `No script matched recipe '...'`
+- remote engine with wrong API key
+  - expected: HTTP 401 surfaced as a connection/request failure
+
 ## Notes
 
 - The test project currently covers script resolution logic and storage service.

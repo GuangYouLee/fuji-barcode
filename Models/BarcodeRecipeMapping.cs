@@ -6,3 +6,5 @@ public sealed class BarcodeRecipeMapping
     public string RecipeName { get; init; } = "";
     public DateTime UpdatedAt { get; init; }
 }
+
+
