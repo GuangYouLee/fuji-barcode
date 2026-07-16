@@ -575,7 +575,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F50D;</div>
             <div class="step-label">Step 3</div>
-            <div class="step-desc">Fetch available scripts from rpa-engine via <code>GET /api/scripts</code></div>
+            <div class="step-desc">Select the saved global override or use the recipe name as the script name</div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -584,7 +584,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F3AF;</div>
             <div class="step-label">Step 4</div>
-            <div class="step-desc">Match recipe to best script (exact, then versioned, then error)</div>
+            <div class="step-desc">Trigger via <code>POST /run/{scriptName}</code></div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -593,7 +593,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F680;</div>
             <div class="step-label">Step 5</div>
-            <div class="step-desc">Trigger via <code>POST /run/{scriptName}</code> and show result</div>
+            <div class="step-desc">Show the launch result in the operator status</div>
           </div>
         </div>
 
@@ -606,14 +606,14 @@
         <div class="section-icon icon-blue">&#x1F526;</div>
         <h2>Scan Modes</h2>
       </div>
-      <p>The operator selects a mode before scanning. Both paths converge at Step 3 (script fetch).</p>
+      <p>The operator selects a mode before scanning. Both paths converge at Step 3 (script selection).</p>
       <div class="mode-split">
         <div class="mode-box orange">
           <h3>&#x1F7E0; Log ID Mode</h3>
           <ul>
             <li>Scanned value = a <strong>log identifier</strong></li>
             <li>App queries SQLite table <code>barcode_recipe_mappings</code></li>
-            <li>DB returns <code>recipe_name</code> &rarr; continues to script fetch</li>
+            <li>DB returns <code>recipe_name</code> &rarr; continues to script selection</li>
           </ul>
         </div>
         <div class="mode-box blue">
@@ -621,37 +621,36 @@
           <ul>
             <li>Scanned value = the <strong>recipe name directly</strong></li>
             <li>No database lookup needed</li>
-            <li>Proceeds straight to script fetch</li>
+            <li>Proceeds straight to script selection</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- Matching -->
+    <!-- Script selection -->
     <div class="card" id="matching">
       <div class="section-header">
         <div class="section-icon icon-purple">&#x1F3AF;</div>
-        <h2>Script Matching Logic</h2>
+        <h2>Script Selection</h2>
       </div>
-      <p>Implemented in <a href="./Helpers/RecipeScriptResolver.cs"><code>Helpers/RecipeScriptResolver.cs</code></a>. Rules applied in priority order:</p>
+      <p>The scan path selects the script name directly. The Admin screen can browse available engine scripts for the optional global override.</p>
       <div class="two-col" style="margin-top:14px;">
         <div class="sub-card">
-          <h3>Priority Rules</h3>
+          <h3>Selection Rules</h3>
           <ol style="color:var(--text);font-size:0.95rem;">
-            <li><strong>Exact match</strong> on script name &rarr; wins immediately.</li>
-            <li>Names starting with <code>recipeName_</code> are candidates.</li>
-            <li>Highest <code>_Vx.y</code> version among candidates wins.</li>
-            <li>Ambiguous non-versioned tie &rarr; <strong>error, no guess</strong>.</li>
+            <li>A saved global override is used when configured.</li>
+            <li>Otherwise the scanned or resolved recipe name is used.</li>
+            <li><code>GET /api/scripts</code> populates the Admin autocomplete.</li>
           </ol>
         </div>
         <div class="sub-card">
           <h3>Example</h3>
           <p>Recipe name scanned:</p>
           <code>group_script1</code>
-          <p style="margin-top:10px;">Matched script selected:</p>
-          <code>group_script1_202605261129_V1.0</code>
+          <p style="margin-top:10px;">Script name used:</p>
+          <code>group_script1</code>
           <div class="badge-row" style="margin-top:12px;">
-            <span class="badge">Versioned match wins</span>
+            <span class="badge">Recipe name used</span>
           </div>
         </div>
       </div>
@@ -818,7 +817,7 @@ Linux:
             <tr>
               <td><span class="step-num">4</span></td>
               <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
-                Both paths: app resolves the best matching engine script
+                Both paths: app uses the global override or recipe name as the script
               </td>
             </tr>
             <tr>

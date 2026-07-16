@@ -19,26 +19,11 @@ It supports two scan modes:
 
 After the recipe name is known, the app:
 
-1. calls `rpa-engine` `GET /api/scripts` — returns all top-level **folders** and standalone **`.json` files** from the engine's `scripts` directory
-2. matches the recipe name to a script/package name
-3. calls `POST /run/{scriptName}` — the engine starts the script asynchronously and immediately returns HTTP 202 Accepted
-4. shows the launch result in the operator status text
+1. uses the saved global RPA script override when one is configured; otherwise it uses the recipe name as the script name
+2. calls `POST /run/{scriptName}` — the engine starts the script asynchronously and immediately returns HTTP 202 Accepted
+3. shows the launch result in the operator status text
 
-## How Matching Works
-
-Script matching is implemented in [Helpers/RecipeScriptResolver.cs](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\Helpers\RecipeScriptResolver.cs).
-
-Rules:
-
-- exact match wins
-- otherwise names starting with `recipeName_` are considered
-- if multiple versioned matches exist, the highest `_Vx.y` version wins
-- if matches are still ambiguous, the app stops and shows an error instead of guessing
-
-Example:
-
-- recipe name: `group_script1`
-- matching engine script: `group_script1_202605261129_V1.0`
+The Admin screen can call `GET /api/scripts` to populate the optional global-script autocomplete.
 
 ## Main Screen
 
@@ -150,7 +135,7 @@ Client implementation:
 1. operator leaves mode on `Log ID`
 2. scanner scans barcode
 3. app looks up `log_id -> recipe_name` in local SQLite
-4. app resolves the matching engine script
+4. app uses the global override or recipe name as the script name
 5. app triggers `rpa-engine` run API
 6. app shows result in status text
 
@@ -159,7 +144,7 @@ Client implementation:
 1. operator switches mode to `Recipe`
 2. scanner scans recipe name directly
 3. app skips database lookup
-4. app resolves the matching engine script
+4. app uses the global override or scanned recipe name as the script name
 5. app triggers `rpa-engine` run API
 6. app shows result in status text
 
@@ -280,14 +265,12 @@ If you are calling a remote engine instead of `localhost`, set:
 
 ### 3. Prepare one known script in rpa-engine
 
-Make sure `rpa-engine` has at least one top-level script or script folder whose name matches the recipe you plan to scan.
+Make sure `rpa-engine` has a top-level script or script folder whose name exactly matches the recipe you plan to scan, or save that script name as the global override in the Admin screen.
 
-Example already present in the nearby engine repo:
+Example:
 
-- script/package name: `group_script1_202605261129_V1.0`
+- script/package name: `group_script1`
 - recipe to scan: `group_script1`
-
-This works because [Helpers/RecipeScriptResolver.cs](C:\Users\Lee%20Guang%20You\Documents\BioE%20Repo\fuji-barcode\Helpers\RecipeScriptResolver.cs) accepts exact matches first, then `recipeName_...` versioned matches.
 
 ### 4. Run fuji-barcode
 
@@ -306,10 +289,10 @@ dotnet run --project .\fuji-barcode.csproj
 Expected status flow:
 
 - `Recipe: group_script1`
-- `Matched script: group_script1_202605261129_V1.0`
+- `Using recipe script: group_script1`
 - `Run OK: ...`
 
-If no script matches, the app should stop with a matching error instead of guessing.
+If the script name is wrong, `rpa-engine` returns the run error.
 
 ### 6. Test Log ID mode
 
@@ -327,7 +310,7 @@ Then:
 Expected status flow:
 
 - `Resolved recipe: group_script1`
-- `Matched script: group_script1_202605261129_V1.0`
+- `Using recipe script: group_script1`
 - `Run OK: ...`
 
 ### 7. Quick failure checks
@@ -338,14 +321,14 @@ Use these to confirm the integration errors are understandable:
   - expected: `Connection error: ...`
 - missing barcode mapping in `Log ID` mode
   - expected: `Log ID '...' not found`
-- no matching script in `rpa-engine`
-  - expected: `No script matched recipe '...'`
+- wrong script name in `rpa-engine`
+  - expected: the engine's run error
 - remote engine with wrong API key
   - expected: HTTP 401 surfaced as a connection/request failure
 
 ## Notes
 
-- The test project currently covers script resolution logic and storage service.
+- The test project covers the HTTP client and storage service.
 - The app assumes the barcode scanner acts like a keyboard and sends Enter.
 - The app uses an embedded SQLite database — no PostgreSQL installation required.
 - The database file is stored in the per-user local app-data folder, same as `user-preferences.json`.

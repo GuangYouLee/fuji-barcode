@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using fuji_barcode.Helpers;
 using fuji_barcode.Models;
 using fuji_barcode.Services;
 
@@ -172,11 +171,9 @@ public partial class MainWindowViewModel : ObservableObject
                 StatusText = $"Using recipe script: {matchedScript}";
             }
 
-            _currentRecipeApi.SetRecipe(recipeName, matchedScript, "starting");
+            _currentRecipeApi.SetRecipe(recipeName);
 
             var result = await _rpaClient.RunScriptAsync(matchedScript);
-
-            _currentRecipeApi.SetRecipe(recipeName, matchedScript, result.Success ? "running" : "failed");
 
             StatusText = result.Success
                 ? $"Run OK: {result.Message ?? matchedScript}"

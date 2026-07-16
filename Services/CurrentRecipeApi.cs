@@ -8,14 +8,14 @@ public sealed class CurrentRecipeApi : IDisposable
 {
     private readonly HttpListener _listener = new();
     private readonly object _sync = new();
-    private CurrentRecipeResponse? _current;
+    private string? _current;
 
     public CurrentRecipeApi() => _listener.Prefixes.Add("http://+:5070/");
 
-    public void SetRecipe(string recipeName, string scriptName, string status)
+    public void SetRecipe(string recipeName)
     {
         lock (_sync)
-            _current = new(recipeName, scriptName, status, DateTimeOffset.UtcNow);
+            _current = recipeName;
     }
 
     public void Start() => _ = ListenAsync();
@@ -42,7 +42,7 @@ public sealed class CurrentRecipeApi : IDisposable
                 return;
             }
 
-            CurrentRecipeResponse? current;
+            string? current;
             lock (_sync)
                 current = _current;
 
@@ -54,7 +54,7 @@ public sealed class CurrentRecipeApi : IDisposable
                     : new
                     {
                         execute_label = "recipe",
-                        message = current.RecipeName + "\r\n"
+                        message = current + "\r\n"
                     }
             };
             var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(body));
@@ -75,9 +75,3 @@ public sealed class CurrentRecipeApi : IDisposable
         _listener.Close();
     }
 }
-
-public sealed record CurrentRecipeResponse(
-    string RecipeName,
-    string ScriptName,
-    string Status,
-    DateTimeOffset ScannedAt);
