@@ -34,6 +34,11 @@
       <Button Content="Admin"
               Click="OpenAdminWindow"
               MinWidth="90" />
+      <Button Content="Stop Script"
+              Command="{Binding StopCommand}"
+              Background="#C62828"
+              Foreground="White"
+              MinWidth="90" />
     </StackPanel>
 
     <Separator Grid.Row="3" Margin="0,12,0,8" />

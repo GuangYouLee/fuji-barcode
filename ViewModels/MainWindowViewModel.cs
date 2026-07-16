@@ -53,6 +53,7 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _isBusy;
 
     public IAsyncRelayCommand SubmitCommand { get; }
+    public IAsyncRelayCommand StopCommand { get; }
 
     public MainWindowViewModel(BarcodeLookupService lookupService, RpaEngineClient rpaClient, CurrentRecipeApi currentRecipeApi)
     {
@@ -60,6 +61,7 @@ public partial class MainWindowViewModel : ObservableObject
         _rpaClient = rpaClient;
         _currentRecipeApi = currentRecipeApi;
         SubmitCommand = new AsyncRelayCommand(ProcessScanAsync, () => !IsBusy);
+        StopCommand = new AsyncRelayCommand(StopScriptAsync);
         _scanMode = LoadScanMode();
     }
 
@@ -194,6 +196,26 @@ public partial class MainWindowViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task StopScriptAsync()
+    {
+        StatusText = "Stopping script...";
+
+        try
+        {
+            await _rpaClient.StopScriptAsync();
+            await _rpaClient.ClearSessionsAsync();
+            StatusText = "Stop requested and sessions cleared";
+        }
+        catch (HttpRequestException ex)
+        {
+            StatusText = $"Connection error: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Stop failed: {ex.Message}";
         }
     }
 }

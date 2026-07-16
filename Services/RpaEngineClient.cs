@@ -65,6 +65,28 @@ namespace fuji_barcode.Services
             return NormalizeRunResult(body, scriptName);
         }
 
+        public async Task StopScriptAsync()
+        {
+            var url = "/stop";
+
+            if (!string.IsNullOrEmpty(_targetName))
+            {
+                url += $"?target={_targetName}";
+            }
+
+            var response = await _httpClient.PostAsync(url, null);
+            response.EnsureSuccessStatusCode();
+        }
+
+        public async Task ClearSessionsAsync()
+        {
+            var baseAddress = _httpClient.BaseAddress
+                ?? throw new InvalidOperationException("RpaEngine base URL is not configured");
+            var url = new UriBuilder(baseAddress) { Port = 5001, Path = "/api/v1/clear_sessions", Query = "" }.Uri;
+            var response = await _httpClient.PostAsync(url, null);
+            response.EnsureSuccessStatusCode();
+        }
+
         private static ScriptRunResult NormalizeRunResult(string body, string scriptName)
         {
             var fallback = new ScriptRunResult { Success = true, Message = scriptName };
