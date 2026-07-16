@@ -27,6 +27,10 @@ public partial class App : Application
             var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
             mainWindow.DataContext = serviceProvider.GetRequiredService<MainWindowViewModel>();
             desktop.MainWindow = mainWindow;
+
+            var currentRecipeApi = serviceProvider.GetRequiredService<CurrentRecipeApi>();
+            currentRecipeApi.Start();
+            desktop.Exit += (_, _) => currentRecipeApi.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -61,6 +65,7 @@ public partial class App : Application
         services.AddSingleton<IConfiguration>(config);
         services.AddSingleton<BarcodeLookupService>();
         services.AddSingleton<RpaEngineClient>();
+        services.AddSingleton<CurrentRecipeApi>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<AdminWindowViewModel>();
         services.AddTransient<MainWindow>();

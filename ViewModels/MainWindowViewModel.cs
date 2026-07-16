@@ -10,6 +10,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly BarcodeLookupService _lookupService;
     private readonly RpaEngineClient _rpaClient;
+    private readonly CurrentRecipeApi _currentRecipeApi;
     private readonly string _scanModePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "fuji-barcode",
@@ -54,10 +55,11 @@ public partial class MainWindowViewModel : ObservableObject
 
     public IAsyncRelayCommand SubmitCommand { get; }
 
-    public MainWindowViewModel(BarcodeLookupService lookupService, RpaEngineClient rpaClient)
+    public MainWindowViewModel(BarcodeLookupService lookupService, RpaEngineClient rpaClient, CurrentRecipeApi currentRecipeApi)
     {
         _lookupService = lookupService;
         _rpaClient = rpaClient;
+        _currentRecipeApi = currentRecipeApi;
         SubmitCommand = new AsyncRelayCommand(ProcessScanAsync, () => !IsBusy);
         _scanMode = LoadScanMode();
     }
@@ -156,29 +158,25 @@ public partial class MainWindowViewModel : ObservableObject
                 StatusText = $"Recipe: {recipeName}";
             }
 
-            var scripts = await _rpaClient.ListScriptsAsync();
             string matchedScript;
-
             var globalScriptOverride = await _lookupService.GetSettingAsync("rpa_script_override");
 
             if (!string.IsNullOrWhiteSpace(globalScriptOverride))
             {
-                var exists = scripts.Any(s => s.Name.Equals(globalScriptOverride, StringComparison.OrdinalIgnoreCase));
-                if (!exists)
-                {
-                    StatusText = $"Global override script '{globalScriptOverride}' not found in RPA-engine";
-                    return;
-                }
-                matchedScript = scripts.First(s => s.Name.Equals(globalScriptOverride, StringComparison.OrdinalIgnoreCase)).Name;
+                matchedScript = globalScriptOverride;
                 StatusText = $"Using global override script: {matchedScript}";
             }
             else
             {
-                matchedScript = RecipeScriptResolver.Resolve(scripts, recipeName);
-                StatusText = $"Matched script: {matchedScript}";
+                matchedScript = recipeName;
+                StatusText = $"Using recipe script: {matchedScript}";
             }
 
+            _currentRecipeApi.SetRecipe(recipeName, matchedScript, "starting");
+
             var result = await _rpaClient.RunScriptAsync(matchedScript);
+
+            _currentRecipeApi.SetRecipe(recipeName, matchedScript, result.Success ? "running" : "failed");
 
             StatusText = result.Success
                 ? $"Run OK: {result.Message ?? matchedScript}"
