@@ -113,6 +113,28 @@ public class RpaEngineClientTests
         Assert.Contains("?target=my-target", handler.RequestUri);
     }
 
+    [Fact]
+    public async Task StopScriptAsync_posts_to_stop_and_appends_target_query()
+    {
+        var handler = new FakeMessageHandler(HttpStatusCode.OK, "{}");
+        var client = CreateClient(handler, targetName: "my-target");
+
+        await client.StopScriptAsync();
+
+        Assert.EndsWith("/stop?target=my-target", handler.RequestUri);
+    }
+
+    [Fact]
+    public async Task ClearSessionsAsync_posts_to_port_5001()
+    {
+        var handler = new FakeMessageHandler(HttpStatusCode.OK, "{}");
+        var client = CreateClient(handler);
+
+        await client.ClearSessionsAsync();
+
+        Assert.Equal("http://localhost:5001/api/v1/clear_sessions", handler.RequestUri);
+    }
+
     private sealed class FakeMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;

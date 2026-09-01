@@ -20,8 +20,11 @@ public partial class MainWindow : Window
         DataContextChanged += OnDataContextChanged;
     }
 
-    private async void OpenAdminWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OpenAdminWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (_openAdminWindowCount > 0)
+            return;
+
         var adminWindow = _serviceProvider.GetRequiredService<AdminWindow>();
         adminWindow.DataContext = _serviceProvider.GetRequiredService<AdminWindowViewModel>();
         _openAdminWindowCount++;
@@ -34,12 +37,12 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(() => { Activate(); ScanInput?.Focus(); });
         };
 
+        adminWindow.Show(this);
+
         if (adminWindow.DataContext is AdminWindowViewModel vm)
         {
-            await vm.LoadAsync();
+            _ = vm.LoadAsync();
         }
-
-        adminWindow.Show(this);
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)

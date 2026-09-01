@@ -75,6 +75,12 @@ public partial class AdminWindowViewModel : ObservableObject
         DeleteCommand.NotifyCanExecuteChanged();
     }
 
+    public IReadOnlyList<string> GetLogIds() =>
+        LogIdInput
+            .Split(['\r', '\n', ',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
     public async Task LoadAsync()
     {
         if (IsBusy)
@@ -104,7 +110,7 @@ public partial class AdminWindowViewModel : ObservableObject
                 System.Diagnostics.Debug.WriteLine($"Failed to load scripts from engine: {ex.Message}");
             }
 
-            StatusText = $"Loaded {Mappings.Count} mapping(s)";
+            StatusText = $"Loaded {Mappings.Count} recipe group(s)";
         }
         catch (Exception ex)
         {
@@ -121,12 +127,12 @@ public partial class AdminWindowViewModel : ObservableObject
         if (IsBusy)
             return;
 
-        var logId = LogIdInput.Trim();
+        var logIds = GetLogIds();
         var recipeName = RecipeNameInput.Trim();
 
-        if (string.IsNullOrEmpty(logId) || string.IsNullOrEmpty(recipeName))
+        if (logIds.Count == 0 || string.IsNullOrEmpty(recipeName))
         {
-            StatusText = "Log ID and recipe name are required";
+            StatusText = "At least one Log ID and a recipe name are required";
             return;
         }
 
@@ -134,10 +140,10 @@ public partial class AdminWindowViewModel : ObservableObject
 
         try
         {
-            await _lookupService.UpsertMappingAsync(logId, recipeName);
+            await _lookupService.UpsertMappingsAsync(logIds, recipeName);
             await ReloadMappingsAsync();
             ClearForm();
-            StatusText = $"Saved mapping for '{logId}'";
+            StatusText = $"Saved {logIds.Count} mapping(s) for recipe '{recipeName}'";
         }
         catch (Exception ex)
         {
@@ -181,8 +187,8 @@ public partial class AdminWindowViewModel : ObservableObject
         if (IsBusy)
             return;
 
-        var logId = LogIdInput.Trim();
-        if (string.IsNullOrEmpty(logId))
+        var logIds = GetLogIds();
+        if (logIds.Count == 0)
         {
             StatusText = "Select or enter a Log ID to delete";
             return;
@@ -192,12 +198,12 @@ public partial class AdminWindowViewModel : ObservableObject
 
         try
         {
-            var deleted = await _lookupService.DeleteMappingAsync(logId);
+            var deleted = await _lookupService.DeleteMappingsAsync(logIds);
             await ReloadMappingsAsync();
             ClearForm();
-            StatusText = deleted
-                ? $"Deleted mapping for '{logId}'"
-                : $"No mapping found for '{logId}'";
+            StatusText = deleted > 0
+                ? $"Deleted {deleted} mapping(s)"
+                : "No mapping found";
         }
         catch (Exception ex)
         {
@@ -226,9 +232,14 @@ public partial class AdminWindowViewModel : ObservableObject
         var mappings = await _lookupService.ListMappingsAsync();
         Mappings.Clear();
 
-        foreach (var mapping in mappings)
+        foreach (var group in mappings.GroupBy(mapping => mapping.RecipeName, StringComparer.Ordinal))
         {
-            Mappings.Add(mapping);
+            Mappings.Add(new BarcodeRecipeMapping
+            {
+                LogId = string.Join(", ", group.Select(mapping => mapping.LogId)),
+                RecipeName = group.Key,
+                UpdatedAt = group.Max(mapping => mapping.UpdatedAt)
+            });
         }
     }
 }

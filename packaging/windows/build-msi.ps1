@@ -62,6 +62,13 @@ try {
     New-Item -ItemType Directory -Path $installerDir -Force | Out-Null
 
     $msiOutput = Join-Path $installerDir "fuji-barcode-win-x64.msi"
+    $cabOutput = Join-Path $installerDir "cab1.cab"
+    $pdbOutput = Join-Path $installerDir "fuji-barcode-win-x64.wixpdb"
+    foreach ($staleOutput in @($cabOutput, $pdbOutput)) {
+        if (Test-Path $staleOutput) {
+            Remove-Item -LiteralPath $staleOutput -Force
+        }
+    }
 
     Write-Host "Building MSI..."
     Push-Location $repoRoot
@@ -72,7 +79,7 @@ try {
         exit 1
     }
 
-    dotnet tool run wix build $wxsFile -o $msiOutput -d "PublishDir=$publishDir" -d "ProductVersion=$productVersion"
+    dotnet tool run wix build $wxsFile -o $msiOutput -pdbtype none -d "PublishDir=$publishDir" -d "ProductVersion=$productVersion"
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
         Write-Error "WiX build failed"

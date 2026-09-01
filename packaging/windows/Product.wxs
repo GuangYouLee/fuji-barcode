@@ -5,7 +5,11 @@
            Version="$(var.ProductVersion)"
            UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="command_center_logo.ico" SourceFile="Assets\images\command_center_logo.ico" />
 
     <Property Id="LEGACYCONFIGDIR">
       <DirectorySearch Id="LegacyProgramFilesSearch" Path="[ProgramFiles64Folder]">
@@ -47,6 +51,8 @@
                   Name="Fuji Barcode"
                   Description="Fuji Barcode - Barcode-driven RPA execution"
                   Target="[INSTALLFOLDER]fuji-barcode.exe"
+                  Icon="command_center_logo.ico"
+                  IconIndex="0"
                   WorkingDirectory="INSTALLFOLDER" />
         <RegistryValue Root="HKCU"
                        Key="Software\FujiBarcode"
@@ -63,6 +69,8 @@
           <Shortcut Id="StartMenuShortcut"
                     Name="Fuji Barcode"
                     Target="[INSTALLFOLDER]fuji-barcode.exe"
+                    Icon="command_center_logo.ico"
+                    IconIndex="0"
                     WorkingDirectory="INSTALLFOLDER" />
           <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
           <RegistryValue Root="HKCU"

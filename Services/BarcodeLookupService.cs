@@ -66,11 +66,16 @@ public class BarcodeLookupService
         return mappings;
     }
 
-    public async Task UpsertMappingAsync(string logId, string recipeName)
+    public Task UpsertMappingAsync(string logId, string recipeName)
+        => UpsertMappingsAsync([logId], recipeName);
+
+    public async Task UpsertMappingsAsync(IEnumerable<string> logIds, string recipeName)
     {
         await using var conn = await OpenConnectionAsync();
+        using var transaction = conn.BeginTransaction();
 
         await using var cmd = conn.CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = """
             INSERT INTO barcode_recipe_mappings (log_id, recipe_name, updated_at)
             VALUES (@logId, @recipeName, strftime('%Y-%m-%dT%H:%M:%f', 'now'))
@@ -78,19 +83,41 @@ public class BarcodeLookupService
             SET recipe_name = @recipeName,
                 updated_at = strftime('%Y-%m-%dT%H:%M:%f', 'now')
             """;
-        cmd.Parameters.AddWithValue("@logId", logId);
-        cmd.Parameters.AddWithValue("@recipeName", recipeName);
-        await cmd.ExecuteNonQueryAsync();
+        var logIdParameter = cmd.Parameters.Add("@logId", SqliteType.Text);
+        var recipeNameParameter = cmd.Parameters.Add("@recipeName", SqliteType.Text);
+
+        foreach (var logId in logIds)
+        {
+            logIdParameter.Value = logId;
+            recipeNameParameter.Value = recipeName;
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
     }
 
     public async Task<bool> DeleteMappingAsync(string logId)
+        => await DeleteMappingsAsync([logId]) > 0;
+
+    public async Task<int> DeleteMappingsAsync(IEnumerable<string> logIds)
     {
         await using var conn = await OpenConnectionAsync();
+        using var transaction = conn.BeginTransaction();
 
         await using var cmd = conn.CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = "DELETE FROM barcode_recipe_mappings WHERE log_id = @logId";
-        cmd.Parameters.AddWithValue("@logId", logId);
-        return await cmd.ExecuteNonQueryAsync() > 0;
+        var logIdParameter = cmd.Parameters.Add("@logId", SqliteType.Text);
+        var deletedCount = 0;
+
+        foreach (var logId in logIds)
+        {
+            logIdParameter.Value = logId;
+            deletedCount += await cmd.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+        return deletedCount;
     }
 
     public async Task<string?> GetSettingAsync(string key)
