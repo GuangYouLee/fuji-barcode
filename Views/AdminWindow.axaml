@@ -18,11 +18,9 @@
 
     <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
       <TextBlock VerticalAlignment="Center" Text="Global RPA Script:" FontWeight="SemiBold" />
-      <AutoCompleteBox Grid.Column="1"
-                       ItemsSource="{Binding AvailableScripts}"
-                       Text="{Binding GlobalScriptInput, Mode=TwoWay}"
-                       FilterMode="Contains"
-                       Watermark="Enter or select global RPA script (optional)" />
+      <TextBox Grid.Column="1"
+               Text="{Binding GlobalScriptInput}"
+               Watermark="Enter global RPA script (optional)" />
       <Button Grid.Column="2"
               Content="Save Global Script"
               Command="{Binding SaveGlobalScriptCommand}"
