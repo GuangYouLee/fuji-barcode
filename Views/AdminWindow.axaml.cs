@@ -11,6 +11,17 @@ public partial class AdminWindow : Window
         InitializeComponent();
     }
 
+    private async void ConfirmGlobalScriptSaveClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not AdminWindowViewModel vm)
+            return;
+
+        var dialog = new PasswordDialog();
+        var password = await dialog.ShowDialog<string?>(this);
+        if (password is not null)
+            await vm.SaveGlobalScriptAsync(password);
+    }
+
     private async void ConfirmSaveClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not AdminWindowViewModel vm)

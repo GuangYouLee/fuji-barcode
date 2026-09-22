@@ -36,7 +36,38 @@ public class BarcodeLookupService
         cmd.CommandText = "SELECT recipe_name FROM barcode_recipe_mappings WHERE log_id = @logId LIMIT 1";
         cmd.Parameters.AddWithValue("@logId", logId);
 
-        return await cmd.ExecuteScalarAsync() as string;
+        var recipe = await cmd.ExecuteScalarAsync() as string;
+        if (recipe != null)
+            return recipe;
+
+        cmd.CommandText = """
+            SELECT recipe_name
+            FROM barcode_recipe_mappings
+            WHERE length(log_id) > 0
+              AND (
+                  (length(log_id) <= length(@scannedLogId)
+                   AND substr(@scannedLogId, -length(log_id)) = log_id)
+                  OR
+                  (length(log_id) >= length(@scannedLogId)
+                   AND substr(log_id, -length(@scannedLogId)) = @scannedLogId)
+              )
+            LIMIT 2
+            """;
+        cmd.Parameters.Clear();
+        cmd.Parameters.AddWithValue("@scannedLogId", logId);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+            return null;
+
+        var matchedRecipe = reader.GetString(0);
+        if (await reader.ReadAsync())
+        {
+            throw new InvalidOperationException(
+                $"Log ID '{logId}' matches multiple mappings. Scan a more complete barcode.");
+        }
+
+        return matchedRecipe;
     }
 
     public async Task<List<BarcodeRecipeMapping>> ListMappingsAsync()
@@ -91,6 +122,54 @@ public class BarcodeLookupService
             logIdParameter.Value = logId;
             recipeNameParameter.Value = recipeName;
             await cmd.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+    }
+
+    public async Task ReplaceMappingsAsync(
+        IEnumerable<string> existingLogIds,
+        IEnumerable<string> logIds,
+        string recipeName)
+    {
+        var existingIds = existingLogIds.Distinct(StringComparer.Ordinal).ToArray();
+        var desiredIds = logIds.Distinct(StringComparer.Ordinal).ToArray();
+        var removedIds = existingIds.Except(desiredIds, StringComparer.Ordinal).ToArray();
+
+        await using var conn = await OpenConnectionAsync();
+        using var transaction = conn.BeginTransaction();
+
+        if (removedIds.Length > 0)
+        {
+            await using var deleteCmd = conn.CreateCommand();
+            deleteCmd.Transaction = transaction;
+            deleteCmd.CommandText = "DELETE FROM barcode_recipe_mappings WHERE log_id = @logId";
+            var logIdParameter = deleteCmd.Parameters.Add("@logId", SqliteType.Text);
+
+            foreach (var logId in removedIds)
+            {
+                logIdParameter.Value = logId;
+                await deleteCmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        await using var upsertCmd = conn.CreateCommand();
+        upsertCmd.Transaction = transaction;
+        upsertCmd.CommandText = """
+            INSERT INTO barcode_recipe_mappings (log_id, recipe_name, updated_at)
+            VALUES (@logId, @recipeName, strftime('%Y-%m-%dT%H:%M:%f', 'now'))
+            ON CONFLICT(log_id) DO UPDATE
+            SET recipe_name = @recipeName,
+                updated_at = strftime('%Y-%m-%dT%H:%M:%f', 'now')
+            """;
+        var desiredLogIdParameter = upsertCmd.Parameters.Add("@logId", SqliteType.Text);
+        var recipeNameParameter = upsertCmd.Parameters.Add("@recipeName", SqliteType.Text);
+
+        foreach (var logId in desiredIds)
+        {
+            desiredLogIdParameter.Value = logId;
+            recipeNameParameter.Value = recipeName;
+            await upsertCmd.ExecuteNonQueryAsync();
         }
 
         await transaction.CommitAsync();

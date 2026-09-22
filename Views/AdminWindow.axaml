@@ -12,19 +12,23 @@
         WindowStartupLocation="CenterOwner">
   <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*" ColumnDefinitions="*,*">
     <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
-               Text="Create, update, or delete barcode mappings"
+               Text="Barcode Recipe Mapping Administration"
                FontSize="18"
                FontWeight="SemiBold" />
 
-    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-      <TextBlock VerticalAlignment="Center" Text="Global RPA Script:" FontWeight="SemiBold" />
+    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,4" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+      <TextBlock VerticalAlignment="Center" Text="Unysis Script Override:" FontWeight="SemiBold" />
       <TextBox Grid.Column="1"
                Text="{Binding GlobalScriptInput}"
-               Watermark="Enter global RPA script (optional)" />
+               Watermark="Optional override for the recipe-matched Unysis script" />
       <Button Grid.Column="2"
-              Content="Save Global Script"
-              Command="{Binding SaveGlobalScriptCommand}"
+              Content="Save Unysis Script"
+              Click="ConfirmGlobalScriptSaveClick"
               MinWidth="140" />
+      <Button Grid.Column="3"
+              Content="{Binding MappingSearchButtonText}"
+              Command="{Binding ToggleMappingSearchCommand}"
+              MinWidth="120" />
     </Grid>
 
     <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,12,0,0" ColumnDefinitions="*,*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
@@ -68,26 +72,40 @@
             BorderThickness="1"
             CornerRadius="6"
             Padding="8">
-      <Grid RowDefinitions="Auto,*">
+      <Grid RowDefinitions="Auto,Auto,*">
         <Grid ColumnDefinitions="2*,2*,*" Margin="0,0,0,8">
           <TextBlock Grid.Column="0" Text="Log ID(s)" FontWeight="Bold" />
           <TextBlock Grid.Column="1" Text="Recipe" FontWeight="Bold" />
           <TextBlock Grid.Column="2" Text="Updated" FontWeight="Bold" />
         </Grid>
 
-        <ListBox Grid.Row="1"
-                 ItemsSource="{Binding Mappings}"
-                 SelectedItem="{Binding SelectedMapping}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:BarcodeRecipeMapping">
-              <Grid ColumnDefinitions="2*,2*,*" Margin="0,4">
-                <TextBlock Grid.Column="0" Text="{Binding LogId}" TextWrapping="Wrap" />
-                <TextBlock Grid.Column="1" Text="{Binding RecipeName}" />
-                <TextBlock Grid.Column="2" Text="{Binding UpdatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
-              </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
+        <Grid Grid.Row="1" Margin="0,0,0,8" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8"
+              IsVisible="{Binding IsMappingSearchVisible}">
+          <TextBlock VerticalAlignment="Center" Text="Find:" />
+          <TextBox Grid.Column="1"
+                   Text="{Binding MappingFilterText}"
+                   Watermark="Search Log ID or recipe" />
+          <Button Grid.Column="2" Content="Clear" Command="{Binding ClearMappingFilterCommand}" MinWidth="70" />
+        </Grid>
+
+        <Grid Grid.Row="2">
+          <ListBox ItemsSource="{Binding Mappings}"
+                   SelectedItem="{Binding SelectedMapping}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="m:BarcodeRecipeMapping">
+                <Grid ColumnDefinitions="2*,2*,*" Margin="0,4">
+                  <TextBlock Grid.Column="0" Text="{Binding LogId}" TextWrapping="Wrap" />
+                  <TextBlock Grid.Column="1" Text="{Binding RecipeName}" />
+                  <TextBlock Grid.Column="2" Text="{Binding UpdatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock IsVisible="{Binding HasNoMatchingMappings}"
+                     Text="No matching mappings."
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center" />
+        </Grid>
       </Grid>
     </Border>
   </Grid>

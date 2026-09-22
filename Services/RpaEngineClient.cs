@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using fuji_barcode.Models;
@@ -59,6 +60,16 @@ namespace fuji_barcode.Services
             }
 
             var response = await _httpClient.PostAsync(url, null);
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                return new ScriptRunResult
+                {
+                    Success = false,
+                    Message = "A script is already running. Click Stop before retrying."
+                };
+            }
+
             response.EnsureSuccessStatusCode();
 
             var body = await response.Content.ReadAsStringAsync();
@@ -75,6 +86,12 @@ namespace fuji_barcode.Services
             }
 
             var response = await _httpClient.PostAsync(url, null);
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                throw new InvalidOperationException("No script is running.");
+            }
+
             response.EnsureSuccessStatusCode();
         }
 

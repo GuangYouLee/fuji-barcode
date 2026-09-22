@@ -213,6 +213,10 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusText = $"Connection error: {ex.Message}";
         }
+        catch (InvalidOperationException ex)
+        {
+            StatusText = ex.Message;
+        }
         catch (Exception ex)
         {
             StatusText = $"Stop failed: {ex.Message}";

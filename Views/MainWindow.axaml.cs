@@ -68,6 +68,22 @@ public partial class MainWindow : Window
         Dispatcher.UIThread.Post(() => ScanInput?.Focus());
     }
 
+    private async void ConfirmStopScript(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        var dialog = new ConfirmDialog(
+            "Stop Script",
+            "Stop the running script and clear its sessions?",
+            "Stop Script");
+
+        if (await dialog.ShowDialog<bool>(this))
+        {
+            await vm.StopCommand.ExecuteAsync(null);
+        }
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.IsBusy) &&

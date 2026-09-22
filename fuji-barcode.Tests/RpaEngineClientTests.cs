@@ -125,6 +125,17 @@ public class RpaEngineClientTests
     }
 
     [Fact]
+    public async Task StopScriptAsync_reports_when_no_script_is_running()
+    {
+        var handler = new FakeMessageHandler(HttpStatusCode.Conflict, "{}");
+        var client = CreateClient(handler);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(client.StopScriptAsync);
+
+        Assert.Equal("No script is running.", exception.Message);
+    }
+
+    [Fact]
     public async Task ClearSessionsAsync_posts_to_port_5001()
     {
         var handler = new FakeMessageHandler(HttpStatusCode.OK, "{}");

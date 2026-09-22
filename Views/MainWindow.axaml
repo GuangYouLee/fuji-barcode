@@ -36,7 +36,7 @@
               Click="OpenAdminWindow"
               MinWidth="90" />
       <Button Content="Stop Script"
-              Command="{Binding StopCommand}"
+              Click="ConfirmStopScript"
               Background="#C62828"
               Foreground="White"
               MinWidth="90" />
@@ -46,6 +46,7 @@
 
     <TextBlock Grid.Row="4"
                Text="{Binding StatusText}"
+               FontSize="20"
                TextWrapping="Wrap" />
   </Grid>
 </Window>
