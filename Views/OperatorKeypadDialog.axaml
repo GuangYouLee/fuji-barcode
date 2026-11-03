@@ -1,0 +1,88 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:fuji_barcode.ViewModels" x:Class="fuji_barcode.Views.OperatorKeypadDialog"
+        x:DataType="vm:OperatorKeypadViewModel" Title="Login window" Width="540" SizeToContent="Height" MaxHeight="710"
+        CanResize="False" WindowStartupLocation="CenterOwner" Background="#F8FAFC" RequestedThemeVariant="Light">
+  <Window.Resources>
+    <SolidColorBrush x:Key="KeySurface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="KeyBorder" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="KeyHover" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="KeyPressed" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="ConfirmSurface" Color="#15803D"/>
+    <SolidColorBrush x:Key="ConfirmPressed" Color="#166534"/>
+  </Window.Resources>
+  <Window.Styles>
+    <Style Selector="TextBlock.loginStatus"><Setter Property="Foreground" Value="#475569"/></Style>
+    <Style Selector="TextBlock.loginStatus.error"><Setter Property="Foreground" Value="#B91C1C"/></Style>
+    <Style Selector="Button">
+      <Setter Property="MinHeight" Value="56"/><Setter Property="Padding" Value="12,8"/>
+      <Setter Property="FontSize" Value="18"/><Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="VerticalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Background" Value="{StaticResource KeyHover}"/><Setter Property="Foreground" Value="#0F172A"/>
+      <Setter Property="BorderBrush" Value="{StaticResource KeyBorder}"/><Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Button.key">
+      <Setter Property="Height" Value="60"/><Setter Property="FontSize" Value="28"/>
+      <Setter Property="Background" Value="{StaticResource KeySurface}"/>
+    </Style>
+    <Style Selector="Button.key:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource KeyHover}"/>
+    </Style>
+    <Style Selector="Button.key:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource KeyPressed}"/>
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="Height" Value="60"/><Setter Property="FontSize" Value="18"/>
+    </Style>
+    <Style Selector="Button.confirm">
+      <Setter Property="Background" Value="{StaticResource ConfirmSurface}"/><Setter Property="Foreground" Value="White"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ConfirmSurface}"/><Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.confirm:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource ConfirmPressed}"/><Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="Button.confirm:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource ConfirmPressed}"/><Setter Property="Foreground" Value="White"/>
+    </Style>
+  </Window.Styles>
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+  <Grid Margin="24" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+    <TextBlock Text="{Binding TitleText}" FontSize="27" FontWeight="SemiBold" Foreground="#0F172A"/>
+    <TextBlock Grid.Row="1" Text="{Binding ScanContext}" TextWrapping="Wrap" MaxHeight="65" TextTrimming="CharacterEllipsis" Foreground="#475569"/>
+    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="12">
+    <StackPanel Spacing="4">
+      <TextBlock Text="OPERATOR ID" Foreground="#475569"/>
+      <Button Command="{Binding SelectIdCommand}" IsEnabled="{Binding CanEditId}" BorderBrush="{Binding IdBorder}" BorderThickness="2" Height="68" Background="White" AutomationProperties.Name="Operator ID, four digits">
+        <TextBlock Text="{Binding OperatorDisplay}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" FontSize="28" FontWeight="SemiBold"/>
+      </Button>
+    </StackPanel>
+    <StackPanel Grid.Column="1" Spacing="4">
+      <TextBlock Text="PIN" Foreground="#475569"/>
+      <Button Command="{Binding SelectPinCommand}" IsEnabled="{Binding CanInteract}" BorderBrush="{Binding PinBorder}" BorderThickness="2" Height="68" Background="White" AutomationProperties.Name="PIN, four digits, masked">
+        <TextBlock Text="{Binding PinDisplay}" TextWrapping="NoWrap" FontSize="28" FontWeight="SemiBold"/>
+      </Button>
+    </StackPanel>
+    </Grid>
+    <TextBlock Grid.Row="3" Text="{Binding ActiveFieldText}" Foreground="#15803D" FontWeight="SemiBold"/>
+    <TextBlock Grid.Row="4" Classes="loginStatus" Classes.error="{Binding IsCredentialRejected}" Text="{Binding StatusText}" IsVisible="{Binding HasStatusText}" TextWrapping="Wrap"/>
+    <Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*,*" RowSpacing="10" ColumnSpacing="10" IsEnabled="{Binding CanInteract}">
+      <Button Classes="key" Content="1" Command="{Binding DigitCommand}" CommandParameter="1"/>
+      <Button Classes="key" Grid.Column="1" Content="2" Command="{Binding DigitCommand}" CommandParameter="2"/>
+      <Button Classes="key" Grid.Column="2" Content="3" Command="{Binding DigitCommand}" CommandParameter="3"/>
+      <Button Classes="key" Grid.Row="1" Content="4" Command="{Binding DigitCommand}" CommandParameter="4"/>
+      <Button Classes="key" Grid.Row="1" Grid.Column="1" Content="5" Command="{Binding DigitCommand}" CommandParameter="5"/>
+      <Button Classes="key" Grid.Row="1" Grid.Column="2" Content="6" Command="{Binding DigitCommand}" CommandParameter="6"/>
+      <Button Classes="key" Grid.Row="2" Content="7" Command="{Binding DigitCommand}" CommandParameter="7"/>
+      <Button Classes="key" Grid.Row="2" Grid.Column="1" Content="8" Command="{Binding DigitCommand}" CommandParameter="8"/>
+      <Button Classes="key" Grid.Row="2" Grid.Column="2" Content="9" Command="{Binding DigitCommand}" CommandParameter="9"/>
+      <Button Classes="action" Grid.Row="3" Content="Clear" Command="{Binding ClearCommand}"/>
+      <Button Classes="key" Grid.Row="3" Grid.Column="1" Content="0" Command="{Binding DigitCommand}" CommandParameter="0"/>
+      <Button Classes="action" Grid.Row="3" Grid.Column="2" Content="Delete" Command="{Binding DeleteCommand}"/>
+    </Grid>
+    <Grid Grid.Row="6" ColumnDefinitions="*,*" ColumnSpacing="12" IsEnabled="{Binding CanInteract}">
+      <Button Content="Cancel" Command="{Binding CancelCommand}" HorizontalAlignment="Stretch"/>
+      <Button Classes="confirm" Grid.Column="1" Content="Confirm" Command="{Binding ConfirmCommand}" HorizontalAlignment="Stretch"/>
+    </Grid>
+  </Grid>
+  </ScrollViewer>
+</Window>

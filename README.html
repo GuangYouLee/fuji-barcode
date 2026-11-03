@@ -512,8 +512,8 @@
         <div class="eyebrow">&#x2B21; Avalonia Desktop App</div>
         <h1>Fuji<span> Barcode</span></h1>
         <p>
-          Barcode-driven RPA execution. The operator scans a barcode; the app looks up the recipe,
-          resolves the best engine script, and triggers the run — no backend interaction required from the operator.
+          Barcode traceability with touchscreen operator authentication. Log ID and Recipe scans
+          record the operator and scanned product information before requesting an RPA launch.
         </p>
         <div class="hero-badges">
           <span class="pill orange">C# / Avalonia UI</span>
@@ -533,7 +533,7 @@
         </div>
         <div class="meta-card">
           <div class="meta-label">Output</div>
-          <div class="meta-value">RPA Script Execution</div>
+          <div class="meta-value">Scan History &amp; RPA Launch</div>
         </div>
         <div class="meta-card">
           <div class="meta-label">UI Screens</div>
@@ -549,7 +549,7 @@
         <h2>End-to-End Execution Pipeline</h2>
       </div>
       <p style="color:var(--muted);font-size:0.94rem;">
-        Every barcode scan travels through the same 5-stage pipeline from raw input to triggered execution.
+        Each scan is validated against saved mappings before operator login, then recorded before launch.
       </p>
       <div class="pipeline-steps">
 
@@ -557,7 +557,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F4E1;</div>
             <div class="step-label">Step 1</div>
-            <div class="step-desc">Receive barcode from keyboard-wedge scanner via text input</div>
+            <div class="step-desc">Receive barcode and validate the Log ID or Recipe against saved mappings</div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -566,7 +566,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F5C4;&#xFE0F;</div>
             <div class="step-label">Step 2</div>
-            <div class="step-desc">Resolve to a <strong>recipe name</strong> — direct or via SQLite lookup</div>
+            <div class="step-desc">Authenticate Operator ID and masked PIN using the touch keypad</div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -575,7 +575,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F50D;</div>
             <div class="step-label">Step 3</div>
-            <div class="step-desc">Select the saved global override or use the recipe name as the script name</div>
+            <div class="step-desc">Record operator, authentication time, scanned Log ID when applicable, and recipe</div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -584,7 +584,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F3AF;</div>
             <div class="step-label">Step 4</div>
-            <div class="step-desc">Trigger via <code>POST /run/{scriptName}</code></div>
+            <div class="step-desc">For Log ID or Recipe only, select script and request <code>POST /run/{scriptName}</code></div>
           </div>
           <div class="step-arrow">&#x2192;</div>
         </div>
@@ -593,7 +593,7 @@
           <div class="step">
             <div class="step-bubble">&#x1F680;</div>
             <div class="step-label">Step 5</div>
-            <div class="step-desc">Show the launch result in the operator status</div>
+            <div class="step-desc">Append and show the launch result; script completion is not tracked</div>
           </div>
         </div>
 
@@ -606,7 +606,8 @@
         <div class="section-icon icon-blue">&#x1F526;</div>
         <h2>Scan Modes</h2>
       </div>
-      <p>The operator selects a mode before scanning. Both paths converge at Step 3 (script selection).</p>
+      <p>Select Log ID or Recipe before scanning. The app validates the scanned value against saved mappings before opening Operator Login.
+        Unknown values, ambiguous Log IDs, and database errors stop the scan without login, recording, or launch. A global script override does not bypass validation.</p>
       <div class="mode-split">
         <div class="mode-box orange">
           <h3>&#x1F7E0; Log ID Mode</h3>
@@ -620,8 +621,8 @@
           <h3>&#x1F535; Recipe Mode</h3>
           <ul>
             <li>Scanned value = the <strong>recipe name directly</strong></li>
-            <li>No database lookup needed</li>
-            <li>Proceeds straight to script selection</li>
+            <li>Recipe name must exactly match a saved recipe in the Admin mappings before login opens</li>
+            <li>Records operator and recipe before script launch; Log ID is empty</li>
           </ul>
         </div>
       </div>
@@ -671,7 +672,12 @@
             <li>Mode toggle: <code>Log ID</code> / <code>Recipe</code></li>
             <li>Submit via <kbd style="font-family:var(--mono);background:var(--border);padding:1px 5px;border-radius:4px;font-size:0.82rem;">Enter</kbd> or button</li>
             <li>Input clears automatically after each scan</li>
-            <li>Guarded by <code>IsBusy</code> — no duplicate triggers</li>
+            <li>Fresh touchscreen Operator ID/PIN keypad for every scan; no remembered credentials</li>
+            <li>Four Operator ID digits automatically select PIN; completing both fields automatically submits the login</li>
+            <li>Keyboard/scanner input is ignored while the keypad is open</li>
+            <li>Wrong credentials leave login open with an empty PIN and a retry message; no record or launch until login succeeds</li>
+            <li>Cancel closes login without recording or launching a script</li>
+            <li>Scanning is disabled while processing or viewing Admin</li>
             <li>Status text shows result inline</li>
           </ul>
           <p style="margin-top:12px;font-size:0.88rem;">
@@ -679,14 +685,22 @@
           </p>
         </div>
         <div class="sub-card">
-          <h3>Admin Screen (Mappings CRUD)</h3>
-          <p>Maintains the <code>barcode_recipe_mappings</code> table from within the app.</p>
+          <h3>Admin Screen</h3>
+          <p>Maintains mappings and provides Operators and History windows using the existing Admin access model.</p>
           <ul style="font-size:0.94rem;">
             <li><strong>Create:</strong> enter Log ID + Recipe &rarr; Save</li>
             <li><strong>Read:</strong> click Refresh to load mappings list</li>
             <li><strong>Update:</strong> select row &rarr; edit &rarr; Save</li>
             <li><strong>Delete:</strong> select row or enter ID &rarr; Delete</li>
             <li>Save &amp; Delete both require confirmation dialog</li>
+            <li><strong>Operators:</strong> touch keypad creates or resets numeric IDs/PINs; account deletion preserves history</li>
+            <li>Operator IDs and PINs: exactly 4 digits each; leading zeroes preserved</li>
+            <li>Account creation and PIN resets still require tapping Confirm to save</li>
+            <li>Recreate existing IDs outside the 4-digit rule; reset PINs that do not meet it</li>
+            <li>Saved PINs cannot be displayed; resetting replaces the salted hash</li>
+            <li><strong>History:</strong> read-only records with Refresh and Previous/Next paging; tap Select month to choose a month/year, then Apply, or All months to clear the filter</li>
+            <li>History displays the full matched Log ID, raw scan, recipe, operator, and timestamp; Type and Outcome remain stored and are hidden in this view</li>
+            <li>Unysis script password dialog remains separate and unchanged</li>
           </ul>
           <p style="margin-top:12px;font-size:0.88rem;">
             Logic: <a href="./ViewModels/AdminWindowViewModel.cs"><code>ViewModels/AdminWindowViewModel.cs</code></a> &middot;
@@ -708,6 +722,18 @@
       <p>The database file is created automatically in the per-user local app-data folder, alongside <code>user-preferences.json</code>.
         On Windows that is <code>C:\Users\&lt;username&gt;\AppData\Local\fuji-barcode\barcode.db</code>.
         On Linux it resolves through .NET's <code>LocalApplicationData</code> path.
+      </p>
+      <p>Existing mappings and settings are retained. New <code>operators</code> rows contain only the Operator ID and salted PBKDF2 PIN hash.
+        <code>scan_history</code> stores one immutable record per accepted scan; <code>scan_outcomes</code> appends its launch result without overwriting the scan.
+        History captures Operator ID, timestamp, scanned value, Log ID when applicable, recipe ID, and launch outcome:
+        <code>run_ok</code>, <code>run_failed</code>, or <code>connection_error</code>.
+        Direct Recipe scans leave Log ID empty and do not reuse information from a previous scan.
+        New Log ID records snapshot the full matched database ID separately from the raw scanned value.
+        Stored Log IDs are always displayed unchanged, including exact matches. Only legacy records without a stored Log ID infer one from the current mappings; missing or ambiguous matches display the raw scan. Recorded history is never rewritten.
+        An interrupted launch or failed result save may leave <code>pending</code>. A connection error can leave actual launch status uncertain.
+        <code>run_ok</code> means launch accepted, not script completed. If the initial history write fails, no script launches.
+        Timestamps capture successful authentication in UTC and display in local time with an offset.
+        Accounts and history belong to this OS user's database and are not automatically shared with other users or PCs.
       </p>
       <div class="two-col">
         <div class="sub-card">
@@ -788,7 +814,7 @@ Linux:
         <div class="section-icon icon-orange">&#x1F9D1;&#x200D;&#x1F3ED;</div>
         <h2>Typical Operator Flow</h2>
       </div>
-      <p>Step-by-step comparison for both scan modes from the operator's perspective.</p>
+      <p>First create an operator through Admin &rarr; Operators. Each Log ID or Recipe scan then uses the following flow.</p>
       <div style="overflow-x:auto;margin-top:16px;">
         <table class="flow-table">
           <thead>
@@ -806,30 +832,29 @@ Linux:
             </tr>
             <tr>
               <td><span class="step-num">2</span></td>
-              <td>Scanner reads barcode label</td>
-              <td>Scanner reads recipe name label</td>
+              <td>Scan barcode; resolve its recipe using the saved mappings before login</td>
+              <td>Scan recipe; check that its exact name exists in saved mappings before login</td>
             </tr>
             <tr>
               <td><span class="step-num">3</span></td>
-              <td>App queries <code>log_id &rarr; recipe_name</code> in SQLite</td>
-              <td><em style="color:var(--muted);">DB lookup skipped</em></td>
+              <td colspan="2">Enter four Operator ID digits to select PIN, then four PIN digits to submit automatically</td>
             </tr>
             <tr>
               <td><span class="step-num">4</span></td>
               <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
-                Both paths: app uses the global override or recipe name as the script
+                Record operator, Log ID when applicable, validated recipe, and authentication time
               </td>
             </tr>
             <tr>
               <td><span class="step-num">5</span></td>
               <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
-                Both paths: app calls <code>POST /run/{scriptName}</code> on rpa-engine
+                Use the global override or recipe name, then call <code>POST /run/{scriptName}</code> on rpa-engine
               </td>
             </tr>
             <tr>
               <td><span class="step-num">6</span></td>
               <td colspan="2" style="text-align:center;color:var(--muted);font-style:italic;">
-                Both paths: status text updates with result (success or error)
+                Append the launch result to history and update status; script completion is not tracked
               </td>
             </tr>
           </tbody>
@@ -937,15 +962,18 @@ dotnet test ..\fuji-barcode.Tests\fuji-barcode.Tests.csproj</pre>
           <h3>Run Checks</h3>
           <ol style="font-size:0.94rem;">
             <li>Run <code>fuji-barcode</code> with <code>dotnet run --project .\fuji-barcode.csproj</code>.</li>
-            <li>In <code>Recipe</code> mode, scan or type <code>group_script1</code>. Expected: recipe shown, script matched, then <code>Run OK: ...</code>.</li>
-            <li>In <code>Admin</code>, create mapping <code>TEST-BC-001 -&gt; group_script1</code>.</li>
-            <li>Back in <code>Log ID</code> mode, scan or type <code>TEST-BC-001</code>. Expected: resolved recipe, matched script, then <code>Run OK: ...</code>.</li>
+            <li>Create an operator through Admin &rarr; Operators.</li>
+            <li>In <code>Admin</code>, create mapping <code>TEST-BC-001 -&gt; group_script1</code> before scanning either mode.</li>
+            <li>In <code>Recipe</code> mode, scan <code>group_script1</code> and authenticate again. Expected: traceability row, then launch result.</li>
+            <li>Back in <code>Log ID</code> mode, scan <code>TEST-BC-001</code> and authenticate again. Expected: resolved recipe, traceability row, then launch result.</li>
           </ol>
           <div class="badge-row">
             <span class="badge">Wrong BaseUrl -&gt; connection error</span>
-            <span class="badge">Missing mapping -&gt; Log ID not found</span>
+            <span class="badge">Unknown Log ID or Recipe -&gt; rejected before login</span>
             <span class="badge">No script match -&gt; matching error</span>
-            <span class="badge">Wrong remote API key -&gt; 401 request failure</span>
+            <span class="badge">Wrong remote API key -&gt; 401 launch rejected (run_failed)</span>
+            <span class="badge">Wrong PIN -&gt; retry in the same login window</span>
+            <span class="badge">Cancel -&gt; no row or launch</span>
           </div>
         </div>
       </div>
@@ -972,7 +1000,7 @@ dotnet test ..\fuji-barcode.Tests\fuji-barcode.Tests.csproj</pre>
         </div>
         <div class="note-item">
           <span class="note-icon">&#x26A0;&#xFE0F;</span>
-          <div><strong>Known warning:</strong> current builds may show a transitive <code>Tmds.DBus.Protocol</code> warning from the Avalonia dependency chain. Known upstream issue; does not affect functionality.</div>
+          <div><strong>Dependency security:</strong> <code>Tmds.DBus.Protocol</code> is pinned to the patched <code>0.21.3</code> release to override Avalonia's transitive <code>0.21.2</code> dependency.</div>
         </div>
       </div>
     </div>

@@ -1,15 +1,23 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using fuji_barcode.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fuji_barcode.Views;
 
 public partial class AdminWindow : Window
 {
-    public AdminWindow()
+    private readonly IServiceProvider _services;
+    public AdminWindow(IServiceProvider services)
     {
+        _services = services;
         InitializeComponent();
     }
+
+    private async void OpenOperatorsClick(object? sender, RoutedEventArgs e)
+        => await _services.GetRequiredService<OperatorsWindow>().ShowDialog(this);
+    private async void OpenHistoryClick(object? sender, RoutedEventArgs e)
+        => await _services.GetRequiredService<HistoryWindow>().ShowDialog(this);
 
     private async void ConfirmGlobalScriptSaveClick(object? sender, RoutedEventArgs e)
     {

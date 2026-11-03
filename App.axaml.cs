@@ -64,6 +64,13 @@ public partial class App : Application
             .Build();
         services.AddSingleton<IConfiguration>(config);
         services.AddSingleton<BarcodeLookupService>();
+        services.AddSingleton<TraceabilityService>();
+        services.AddTransient<OperatorKeypadViewModel>();
+        services.AddTransient<OperatorsWindowViewModel>();
+        services.AddTransient<HistoryWindowViewModel>();
+        services.AddTransient<OperatorKeypadDialog>();
+        services.AddTransient<OperatorsWindow>();
+        services.AddTransient<HistoryWindow>();
         services.AddSingleton<RpaEngineClient>();
         services.AddSingleton<CurrentRecipeApi>();
         services.AddSingleton<MainWindowViewModel>();

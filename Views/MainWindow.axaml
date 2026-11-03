@@ -8,16 +8,16 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/images/command_center_logo.ico"
         Title="Fuji Barcode Scanner"
-        Width="500" Height="350"
+        Width="540" Height="390"
         WindowStartupLocation="CenterScreen">
-  <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+  <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
     <TextBox Grid.Row="0"
              Name="ScanInput"
              Text="{Binding ScanText}"
              Watermark="Scan barcode..."
              IsEnabled="{Binding CanScan}" />
 
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" Spacing="12">
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" Spacing="12" IsEnabled="{Binding CanScan}">
       <RadioButton Content="Log ID"
                    IsChecked="{Binding IsLogIdMode}"
                    Click="RefocusScanInput" />
@@ -33,6 +33,7 @@
               IsDefault="True"
               MinWidth="90" />
       <Button Content="Admin"
+              IsEnabled="{Binding CanScan}"
               Click="OpenAdminWindow"
               MinWidth="90" />
       <Button Content="Stop Script"
@@ -44,9 +45,8 @@
 
     <Separator Grid.Row="3" Margin="0,12,0,8" />
 
-    <TextBlock Grid.Row="4"
-               Text="{Binding StatusText}"
-               FontSize="20"
-               TextWrapping="Wrap" />
+    <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+      <TextBlock Text="{Binding StatusText}" FontSize="20" TextWrapping="Wrap" />
+    </ScrollViewer>
   </Grid>
 </Window>

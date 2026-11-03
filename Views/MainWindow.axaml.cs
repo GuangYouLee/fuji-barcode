@@ -28,9 +28,11 @@ public partial class MainWindow : Window
         var adminWindow = _serviceProvider.GetRequiredService<AdminWindow>();
         adminWindow.DataContext = _serviceProvider.GetRequiredService<AdminWindowViewModel>();
         _openAdminWindowCount++;
+        if (DataContext is MainWindowViewModel mainVm) mainVm.IsAdminOpen = true;
         adminWindow.Closed += (_, _) =>
         {
             _openAdminWindowCount = Math.Max(0, _openAdminWindowCount - 1);
+            if (DataContext is MainWindowViewModel ownerVm) ownerVm.IsAdminOpen = _openAdminWindowCount > 0;
             if (_openAdminWindowCount > 0)
                 return;
 
@@ -49,6 +51,12 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel viewModel)
         {
+            viewModel.AuthenticateOperatorAsync = async recipeId =>
+            {
+                var dialog = _serviceProvider.GetRequiredService<OperatorKeypadDialog>();
+                ((OperatorKeypadViewModel)dialog.DataContext!).ConfigureScan(recipeId);
+                return await dialog.ShowDialog<Models.OperatorAuthentication?>(this);
+            };
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
     }

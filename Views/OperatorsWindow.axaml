@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:fuji_barcode.ViewModels" x:Class="fuji_barcode.Views.OperatorsWindow"
+        x:DataType="vm:OperatorsWindowViewModel" Title="Operators" Width="620" Height="560" WindowStartupLocation="CenterOwner">
+  <Grid Margin="20" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+    <TextBlock Text="Operator accounts" FontSize="24" FontWeight="SemiBold"/>
+    <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" ColumnSpacing="8" IsEnabled="{Binding CanInteract}">
+      <Button Content="Add operator" Click="AddClick" Height="52" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+      <Button Grid.Column="1" Content="Reset PIN" Click="ResetClick" IsEnabled="{Binding CanChangeSelected}" Height="52" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+      <Button Grid.Column="2" Content="Delete" Click="DeleteClick" IsEnabled="{Binding CanChangeSelected}" Height="52" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+      <Button Grid.Column="3" Content="Refresh" Click="RefreshClick" Height="52" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+    </Grid>
+    <ListBox Grid.Row="2" ItemsSource="{Binding Operators}" SelectedItem="{Binding SelectedOperator}" IsEnabled="{Binding CanInteract}">
+      <ListBox.Styles><Style Selector="ListBoxItem"><Setter Property="MinHeight" Value="52"/><Setter Property="FontSize" Value="22"/></Style></ListBox.Styles>
+    </ListBox>
+    <TextBlock Grid.Row="3" Text="{Binding StatusText}" TextWrapping="Wrap"/>
+  </Grid>
+</Window>

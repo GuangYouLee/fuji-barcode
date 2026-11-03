@@ -16,6 +16,19 @@ public class BarcodeLookupService
             key   TEXT PRIMARY KEY,
             value TEXT
         );
+        CREATE TABLE IF NOT EXISTS operators (operator_id TEXT PRIMARY KEY, pin_hash TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS scan_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, scanned_at TEXT NOT NULL,
+            operator_id TEXT NOT NULL, scan_type TEXT NOT NULL, scanned_value TEXT NOT NULL,
+            log_id TEXT, recipe_id TEXT, outcome TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS scan_outcomes (
+            scan_id INTEGER PRIMARY KEY REFERENCES scan_history(id), outcome TEXT NOT NULL
+        );
+        CREATE TRIGGER IF NOT EXISTS scan_history_no_update BEFORE UPDATE ON scan_history BEGIN SELECT RAISE(ABORT, 'History is append-only'); END;
+        CREATE TRIGGER IF NOT EXISTS scan_history_no_delete BEFORE DELETE ON scan_history BEGIN SELECT RAISE(ABORT, 'History is append-only'); END;
+        CREATE TRIGGER IF NOT EXISTS scan_outcomes_no_update BEFORE UPDATE ON scan_outcomes BEGIN SELECT RAISE(ABORT, 'Results are append-only'); END;
+        CREATE TRIGGER IF NOT EXISTS scan_outcomes_no_delete BEFORE DELETE ON scan_outcomes BEGIN SELECT RAISE(ABORT, 'Results are append-only'); END;
         """;
 
     public BarcodeLookupService(string? dbPath = null)
@@ -29,19 +42,27 @@ public class BarcodeLookupService
     }
 
     public async Task<string?> LookupRecipeAsync(string logId)
+        => (await LookupMappingAsync(logId))?.RecipeName;
+
+    public async Task<BarcodeRecipeMapping?> LookupMappingAsync(string logId)
     {
         await using var conn = await OpenConnectionAsync();
 
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT recipe_name FROM barcode_recipe_mappings WHERE log_id = @logId LIMIT 1";
+        cmd.CommandText = "SELECT log_id, recipe_name FROM barcode_recipe_mappings WHERE log_id = @logId LIMIT 1";
         cmd.Parameters.AddWithValue("@logId", logId);
 
-        var recipe = await cmd.ExecuteScalarAsync() as string;
-        if (recipe != null)
-            return recipe;
+        await using (var exactReader = await cmd.ExecuteReaderAsync())
+        {
+            if (await exactReader.ReadAsync())
+                return new BarcodeRecipeMapping
+                {
+                    LogId = exactReader.GetString(0), RecipeName = exactReader.GetString(1)
+                };
+        }
 
         cmd.CommandText = """
-            SELECT recipe_name
+            SELECT log_id, recipe_name
             FROM barcode_recipe_mappings
             WHERE length(log_id) > 0
               AND (
@@ -60,14 +81,26 @@ public class BarcodeLookupService
         if (!await reader.ReadAsync())
             return null;
 
-        var matchedRecipe = reader.GetString(0);
+        var mapping = new BarcodeRecipeMapping
+        {
+            LogId = reader.GetString(0), RecipeName = reader.GetString(1)
+        };
         if (await reader.ReadAsync())
         {
             throw new InvalidOperationException(
                 $"Log ID '{logId}' matches multiple mappings. Scan a more complete barcode.");
         }
 
-        return matchedRecipe;
+        return mapping;
+    }
+
+    public async Task<bool> RecipeExistsAsync(string recipeName)
+    {
+        await using var conn = await OpenConnectionAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT EXISTS(SELECT 1 FROM barcode_recipe_mappings WHERE recipe_name = @recipeName)";
+        cmd.Parameters.AddWithValue("@recipeName", recipeName);
+        return Convert.ToInt64(await cmd.ExecuteScalarAsync()) == 1;
     }
 
     public async Task<List<BarcodeRecipeMapping>> ListMappingsAsync()
@@ -233,13 +266,30 @@ public class BarcodeLookupService
         await using var schemaCmd = conn.CreateCommand();
         schemaCmd.CommandText = SchemaSql;
         await schemaCmd.ExecuteNonQueryAsync();
+        var columns = await GetHistoryColumnsAsync(conn);
+        if (!columns.Contains("log_id"))
+        {
+            schemaCmd.CommandText = "ALTER TABLE scan_history ADD COLUMN log_id TEXT";
+            await schemaCmd.ExecuteNonQueryAsync();
+        }
     }
 
-    private async Task<SqliteConnection> OpenConnectionAsync()
+    internal static async Task<HashSet<string>> GetHistoryColumnsAsync(SqliteConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(scan_history)";
+        await using var reader = await command.ExecuteReaderAsync();
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+        return columns;
+    }
+
+    internal async Task<SqliteConnection> OpenConnectionAsync()
     {
         var connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = _dbPath
+            DataSource = _dbPath,
+            ForeignKeys = true
         }.ConnectionString;
 
         var conn = new SqliteConnection(connectionString);
